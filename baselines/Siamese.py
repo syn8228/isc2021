@@ -124,9 +124,9 @@ def gem_npy(x, p=3, eps=1e-6):
     return x ** (1. / p)
 
 
-def generate_train_dataset(query_list, gt_list, train_list, len_data):
-    # TODO: generate training list with length len_data
-    pass
+# def generate_train_dataset(query_list, gt_list, train_list, len_data):
+#     # TODO: generate training list with length len_data
+#     pass
 
 
 class SiameseNetwork(nn.Module):
