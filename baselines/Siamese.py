@@ -219,6 +219,8 @@ class SiameseNetwork2(nn.Module):
             nn.Linear(500, 5)
         )
 
+        self.score = nn.PairwiseDistance(p=2)
+
     def forward_once(self, x):
         output = self.cnn1(x)
         output = output.view(output.size()[0], -1)
@@ -228,7 +230,8 @@ class SiameseNetwork2(nn.Module):
     def forward(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
-        return output1, output2
+        score  = self.score(output1, output2)
+        return score
 
 
 class ContrastiveLoss(torch.nn.Module):
