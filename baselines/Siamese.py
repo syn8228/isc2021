@@ -31,6 +31,7 @@ import pandas as pd
 QUERY = '/cluster/shared_dataset/isc2021/query_images/'
 REFERENCE = '/cluster/shared_dataset/isc2021/reference_images/'
 TRAIN = '/cluster/shared_dataset/isc2021/training_images/training_images/'
+CHECK = 'isc2021/data/multigrain_joint_3B_0.5.pth'
 
 
 def load_model(name, checkpoint_file):
@@ -152,24 +153,25 @@ def generate_train_dataset(query_list, gt_list, train_list, len_data):
 
 
 class SiameseNetwork(nn.Module):
-    def __int__(self, model, check_point):
+    def __int__(self):
         super(SiameseNetwork, self).__init__()
         # hard shared head parameters
-        self.model = model
-        self.check_point = check_point
+        self.model = torchvision.models.resnet50(pretrained=False)
+        st = torch.load(CHECK)
+        state_dict = OrderedDict([
+            (name[9:], v)
+            for name, v in st["model_state"].items() if name.startswith("features.")
+        ])
+        self.model.fc
+        self.model.fc = None
+        self.model.load_state_dict(state_dict)
         self.head = load_model(self.model, self.check_point)
         for p in self.parameters():
             p.requires_grad = False
 
-        if model == "multigrain_resnet50":
-            d_h = 2048
-        else:
-            d_h = 1000
+        d_h = 2048
 
-        if model == "multigrain_resnet50" or model == "zoo_resnet50" or model == "resnet152":
-            self.map = True
-        else:
-            self.map = False
+        self.map = True
 
         self.fc1 = nn.Sequential(
             nn.Linear(d_h, 512),
@@ -177,6 +179,7 @@ class SiameseNetwork(nn.Module):
         )
 
         self.score = nn.PairwiseDistance(p=2)
+
 
     def forward_head(self, input_img):
         if self.map:
