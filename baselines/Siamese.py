@@ -401,6 +401,7 @@ def main():
         net.to(args.device)
         print(net)
         criterion = ContrastiveLoss()
+        criterion.to(args.device)
         optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
 
         for epoch in range(args.epoch):
