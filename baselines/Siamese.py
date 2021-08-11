@@ -398,7 +398,7 @@ def main():
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers, batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork2()
-        net.to(args.device)
+        net.cuda()
         print(net)
         criterion = ContrastiveLoss()
         optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
@@ -406,9 +406,9 @@ def main():
         for epoch in range(args.epoch):
             for i, data in enumerate(train_dataloader, 0):
                 q_img, r_img, label = data
-                q_img.to(args.device)
-                r_img.to(args.device)
-                label.to(args.device)
+                q_img.cuda()
+                r_img.cuda()
+                label.cuda()
                 output = net(q_img, r_img)
                 optimizer.zero_grad()
                 loss = criterion(output, label)
