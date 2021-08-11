@@ -170,13 +170,13 @@ class SiameseNetwork(nn.Module):
         self.score = nn.PairwiseDistance(p=2)
 
 
-    def forward_head(self, input_img):
-        if self.map:
-            output = resnet_activation_map(self.head, input_img)
-        else:
-            output = self.head(input_img)
-        output = self.fc1(output)
-        return output
+    # def forward_head(self, input_img):
+    #     if self.map:
+    #         output = resnet_activation_map(self.head, input_img)
+    #     else:
+    #         output = self.head(input_img)
+    #     output = self.fc1(output)
+    #     return output
 
     def forward(self, query, reference):
         q_out = self.head(query)
