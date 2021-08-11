@@ -186,6 +186,51 @@ class SiameseNetwork(nn.Module):
         return score
 
 
+class SiameseNetwork2(nn.Module):
+    def __init__(self):
+        super(SiameseNetwork2, self).__init__()
+        self.cnn1 = nn.Sequential(
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(1, 4, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(4),
+            nn.Dropout2d(p=.2),
+
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(4, 8, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(8),
+            nn.Dropout2d(p=.2),
+
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(8, 8, kernel_size=3),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(8),
+            nn.Dropout2d(p=.2),
+        )
+
+        self.fc1 = nn.Sequential(
+            nn.Linear(8 * 100 * 100, 500),
+            nn.ReLU(inplace=True),
+
+            nn.Linear(500, 500),
+            nn.ReLU(inplace=True),
+
+            nn.Linear(500, 5)
+        )
+
+    def forward_once(self, x):
+        output = self.cnn1(x)
+        output = output.view(output.size()[0], -1)
+        output = self.fc1(output)
+        return output
+
+    def forward(self, input1, input2):
+        output1 = self.forward_once(input1)
+        output2 = self.forward_once(input2)
+        return output1, output2
+
+
 class ContrastiveLoss(torch.nn.Module):
     def __int__(self, margin=0.5):
         super(ContrastiveLoss, self).__init__()
@@ -352,7 +397,7 @@ def main():
         im_pairs = ImageList(t_list, transform=transforms, imsize=args.imsize)
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers, batch_size=args.batch_size)
         print("loading model")
-        net = SiameseNetwork()
+        net = SiameseNetwork2()
         net.to(args.device)
         print(net)
         criterion = ContrastiveLoss()
