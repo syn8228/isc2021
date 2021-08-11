@@ -219,6 +219,7 @@ class SiameseNetwork2(nn.Module):
         self.score = nn.PairwiseDistance(p=2)
 
     def forward_once(self, x):
+        x.cuda()
         output = self.head(x)
         #output = output.view(output.size()[0], -1)
         output = self.fc1(output)
