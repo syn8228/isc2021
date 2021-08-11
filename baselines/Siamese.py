@@ -315,6 +315,11 @@ def main():
     #
     # print("  found %d images" % (len(image_list)))
 
+    gt_list = read_ground_truth(args.gt_list)
+    query_list = [l.strip() for l in open(args.query_list, "r")]
+    db_list = [l.strip() for l in open(args.db_list, "r")]
+    train_list = [l.strip() for l in open(args.train_list, "r")]
+
     # transform
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
@@ -336,7 +341,7 @@ def main():
     transforms = torchvision.transforms.Compose(transforms)
 
     if args.train:
-        image_pairs = generate_train_dataset(args.query_list, args.gt_list, args.train_list, args.len)
+        image_pairs = generate_train_dataset(query_list, gt_list, train_list, args.len)
         print(f"subsampled {args.len} vectors")
 
         im_pairs = TrainPairs(image_pairs, transform=transforms, imsize=args.imsize)
