@@ -189,41 +189,38 @@ class SiameseNetwork(nn.Module):
 class SiameseNetwork2(nn.Module):
     def __init__(self):
         super(SiameseNetwork2, self).__init__()
-        self.cnn1 = nn.Sequential(
-            nn.ReflectionPad2d(1),
-            nn.Conv2d(1, 4, kernel_size=3),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(4),
-            nn.Dropout2d(p=.2),
-
-            nn.ReflectionPad2d(1),
-            nn.Conv2d(4, 8, kernel_size=3),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(8),
-            nn.Dropout2d(p=.2),
-
-            nn.ReflectionPad2d(1),
-            nn.Conv2d(8, 8, kernel_size=3),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(8),
-            nn.Dropout2d(p=.2),
-        )
+        # self.cnn1 = nn.Sequential(
+        #     nn.ReflectionPad2d(1),
+        #     nn.Conv2d(1, 4, kernel_size=3),
+        #     nn.ReLU(inplace=True),
+        #     nn.BatchNorm2d(4),
+        #     nn.Dropout2d(p=.2),
+        #
+        #     nn.ReflectionPad2d(1),
+        #     nn.Conv2d(4, 8, kernel_size=3),
+        #     nn.ReLU(inplace=True),
+        #     nn.BatchNorm2d(8),
+        #     nn.Dropout2d(p=.2),
+        #
+        #     nn.ReflectionPad2d(1),
+        #     nn.Conv2d(8, 8, kernel_size=3),
+        #     nn.ReLU(inplace=True),
+        #     nn.BatchNorm2d(8),
+        #     nn.Dropout2d(p=.2),
+        # )
+        self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
+        self.head.eval()
 
         self.fc1 = nn.Sequential(
-            nn.Linear(8 * 100 * 100, 500),
-            nn.ReLU(inplace=True),
-
-            nn.Linear(500, 500),
-            nn.ReLU(inplace=True),
-
-            nn.Linear(500, 5)
+            nn.Linear(1000, 512),
+            nn.Linear(512, 256)
         )
 
         self.score = nn.PairwiseDistance(p=2)
 
     def forward_once(self, x):
-        output = self.cnn1(x)
-        output = output.view(output.size()[0], -1)
+        output = self.head(x)
+        #output = output.view(output.size()[0], -1)
         output = self.fc1(output)
         return output
 
