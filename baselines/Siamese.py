@@ -157,8 +157,7 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         # hard shared head parameters
         self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
-        for p in self.parameters():
-            p.requires_grad = False
+        self.head.eval()
 
         d_h = 1000
 
@@ -167,7 +166,7 @@ class SiameseNetwork(nn.Module):
             nn.Linear(512, 256)
         )
 
-        #self.score = nn.PairwiseDistance(p=2)
+        self.score = nn.PairwiseDistance(p=2)
 
 
     def forward_head(self, input_img):
@@ -183,8 +182,8 @@ class SiameseNetwork(nn.Module):
         q_out = self.fc1(q_out)
         r_out = self.head(reference)
         r_out = self.fc1(r_out)
-        #score = self.score(q_out, r_out)
-        return q_out, r_out
+        score = self.score(q_out, r_out)
+        return score
 
 
 class ContrastiveLoss(torch.nn.Module):
@@ -355,8 +354,9 @@ def main():
         print("loading model")
         net = SiameseNetwork()
         net.to(args.device)
+        print(net)
         criterion = ContrastiveLoss()
-        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=0.0001, weight_decay=0.0)
+        optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
 
         for epoch in range(args.epoch):
             for i, data in enumerate(train_dataloader, 0):
