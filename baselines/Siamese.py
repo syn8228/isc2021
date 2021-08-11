@@ -219,6 +219,8 @@ class SiameseNetwork2(nn.Module):
         self.score = nn.PairwiseDistance(p=2)
 
     def forward_once(self, x):
+        x.cuda()
+        self.head.cuda()
         output = self.head(x)
         #output = output.view(output.size()[0], -1)
         output = self.fc1(output)
@@ -398,7 +400,7 @@ def main():
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers, batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork2()
-        net.cuda()
+        net.to(args.device)
         print(net)
         criterion = ContrastiveLoss()
         optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
@@ -406,9 +408,9 @@ def main():
         for epoch in range(args.epoch):
             for i, data in enumerate(train_dataloader, 0):
                 q_img, r_img, label = data
-                q_img.cuda()
-                r_img.cuda()
-                label.cuda()
+                q_img.to(args.device)
+                r_img.to(args.device)
+                label.to(args.device)
                 output = net(q_img, r_img)
                 optimizer.zero_grad()
                 loss = criterion(output, label)
