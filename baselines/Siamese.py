@@ -14,7 +14,7 @@ import torch
 import torchvision
 import torchvision.transforms
 from torch import nn
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 import faiss
 import random
@@ -27,6 +27,10 @@ from pytorch_pretrained_vit import ViT
 import timm
 from pprint import pprint
 
+QUERY = '/cluster/shared_dataset/isc2021/query_images/'
+REFERENCE = '/cluster/shared_dataset/isc2021/reference_images/'
+TRAIN = '/cluster/shared_dataset/isc2021/training_images/training_images/'
+
 
 def load_model(name, checkpoint_file):
     if name == "zoo_resnet50":
@@ -34,7 +38,7 @@ def load_model(name, checkpoint_file):
         print('used model: zoo_resnet50')
         print('--------------------------------------------------------------')
         model = torchvision.models.resnet50(pretrained=True)
-        model.eval()
+        # model.eval()
         return model
 
     if name == "multigrain_resnet50":
@@ -50,7 +54,7 @@ def load_model(name, checkpoint_file):
         model.fc
         model.fc = None
         model.load_state_dict(state_dict)
-        model.eval()
+        # model.eval()
         return model
 
     if name == "vgg":
@@ -58,7 +62,7 @@ def load_model(name, checkpoint_file):
         print('used model: VGG16')
         print('--------------------------------------------------------------')
         model = torchvision.models.vgg16(pretrained=True)
-        model.eval()
+        # model.eval()
         return model
 
     if name == "resnet152":
@@ -66,7 +70,7 @@ def load_model(name, checkpoint_file):
         print('used model: ResNet152')
         print('--------------------------------------------------------------')
         model = torchvision.models.resnet152(pretrained=True)
-        model.eval()
+        # model.eval()
         return model
 
     if name == "efficientnetb1":
@@ -74,7 +78,7 @@ def load_model(name, checkpoint_file):
         print('used model: EfficientNet-b1')
         print('--------------------------------------------------------------')
         model = EfficientNet.from_pretrained('efficientnet-b1')
-        model.eval()
+        # model.eval()
         return model
 
     if name == "efficientnetb7":
@@ -82,7 +86,7 @@ def load_model(name, checkpoint_file):
         print('used model: EfficientNet-b7')
         print('--------------------------------------------------------------')
         model = EfficientNet.from_pretrained('efficientnet-b7')
-        model.eval()
+        # model.eval()
         return model
 
     if name == "transformer":
@@ -90,7 +94,7 @@ def load_model(name, checkpoint_file):
         print('used model: ViT')
         print('--------------------------------------------------------------')
         model = ViT('B_16_imagenet1k', pretrained=True)
-        model.eval()
+        # model.eval()
         return model
 
     if name == "visformer":
@@ -98,7 +102,7 @@ def load_model(name, checkpoint_file):
         print('vit_large_patch16_384')
         print('--------------------------------------------------------------')
         model = timm.create_model('vit_large_patch16_384', pretrained=True)
-        model.eval()
+        # model.eval()
         return model
 
     assert False
@@ -124,9 +128,26 @@ def gem_npy(x, p=3, eps=1e-6):
     return x ** (1. / p)
 
 
-# def generate_train_dataset(query_list, gt_list, train_list, len_data):
-#     # TODO: generate training list with length len_data
-#     pass
+def generate_train_dataset(query_list, gt_list, train_list, len_data):
+    # TODO: generate training list with length len_data
+    random.seed(1)
+    t_list = list()
+    for i in range(len_data):
+        label = random.randint(0, 1)
+        if label == 1:
+            gt = random.sample(gt_list, 1)[0]
+            q = gt.query
+            r = gt.db
+            q = QUERY + q + ".jpg"
+            r = REFERENCE + r + ".jpg"
+            t_list.append((q, r, label))
+        else:
+            q = random.sample(query_list, 1)[0]
+            r = random.sample(train_list, 1)[0]
+            q = QUERY + q + ".jpg"
+            t = TRAIN + r + ".jpg"
+            t_list.append((q, t, label))
+    return t_list
 
 
 class SiameseNetwork(nn.Module):
@@ -175,39 +196,51 @@ class ContrastiveLoss(torch.nn.Module):
         self.m = margin
 
     def forward(self, score, label):
-        loss = (1 - label) * 0.5 * torch.pow(score, 2) + label * 0.5 * torch.pow(torch.clamp(self.m - score, min=0.0), 2)
+        loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) + label * 0.5 * torch.pow(torch.clamp(self.m - score, min=0.0), 2))
         return loss
 
 
-class ImagePairs(Dataset):
+class TrainPairs(Dataset):
 
-    def __int__(self, query_list, ref_list, match_list, transform=None, train=False):
+    def __int__(self, img_pairs, transform=None):
         Dataset.__init__(self)
-        self.q_list = query_list
-        self.r_list = ref_list
-        self.match = match_list
         self.transform = transform
-        self.train = train
+        self.train_list = img_pairs
 
     def __len__(self):
-        return len(self.ref_list)
+        return len(self.train_list)
 
-    def __getitem__(self, i, q_index):
-        query_image = Image.open(self.q_list[q_index])
-        if self.train:
-            # TODO: choose random reference if label is 0, else chose matched reference
-            #if query dose not has matched reference, change label to 0
-            label = random.randint(0, 1)
-            reference_image = None
-        else:
-            reference_image = Image.open(self.r_list[i])
+    def __getitem__(self, i):
+        q, r, label = self.train_list[i]
+        query_image = Image.open(q)
+        db_image = Image.open(r)
         query_image = query_image.convert("RGB")
-        reference_image = reference_image.convert("RGB")
-
+        db_image = db_image.convert("RGB")
         if self.transform is not None:
             query_image = self.transform(query_image)
-            reference_image = self.transform(reference_image)
-        return query_image, reference_image, label
+            db_image = self.transform(db_image)
+        return query_image, db_image, label
+
+
+class ImageList(Dataset):
+
+    def __init__(self, image_list, imsize=None, transform=None):
+        Dataset.__init__(self)
+        self.image_list = image_list
+        self.transform = transform
+        self.imsize = imsize
+
+    def __len__(self):
+        return len(self.image_list)
+
+    def __getitem__(self, i):
+        x = Image.open(self.image_list[i])
+        x = x.convert("RGB")
+        if self.imsize is not None:
+            x.thumbnail((self.imsize, self.imsize), Image.ANTIALIAS)
+        if self.transform is not None:
+            x = self.transform(x)
+        return x
 
 
 def main():
@@ -221,11 +254,9 @@ def main():
 
     group = parser.add_argument_group('feature extraction options')
     aa('--transpose', default=-1, type=int, help="one of the 7 PIL transpose options ")
-    aa('--train_pca', default=False, action="store_true", help="run PCA training")
-    aa('--pca_file', default="", help="File with PCA descriptors")
-    aa('--pca_dim', default=256, type=int, help="output dimension for PCA")
+    aa('--train', default=False, action="store_true", help="run Siamese training")
     aa('--device', default="cuda:0", help='pytroch device')
-    aa('--batch_size', default=64, type=int, help="max batch size to use for extraction")
+    aa('--batch_size', default=32, type=int, help="max batch size to use for extraction")
     aa('--num_workers', default=8, type=int, help="nb of dataloader workers")
 
     group = parser.add_argument_group('model options')
@@ -236,14 +267,19 @@ def main():
     aa('--imsize', default=512, type=int, help="max image size at extraction time")
 
     group = parser.add_argument_group('dataset options')
-    aa('--file_list', required=True, help="CSV file with image filenames")
-    aa('--image_dir', default="", help="search image files in these directories")
-    aa('--n_train_pca', default=10000, type=int, help="nb of training vectors for the PCA")
+    aa('--query_list', required=True, help="file with  query image filenames")
+    aa('--gt_list', required=True, help="file with reference image filenames")
+    aa('--train_list', required=True, help="file with training image filenames")
+    aa('--db_list', required=True, help="file with training image filenames")
+    aa('--len', default=10000, type=int, help="nb of training vectors for the SiameseNetwork")
+    aa('--epoch', default=100, type=int, help="nb of training epochs for the SiameseNetwork")
     aa('--i0', default=0, type=int, help="first image to process")
     aa('--i1', default=-1, type=int, help="last image to process + 1")
 
     group = parser.add_argument_group('output options')
-    aa('--o', default="/tmp/desc.hdf5", help="write trained features to this file")
+    aa('--query_f', default="/isc2021/data/query_siamese.hdf5", help="write query features to this file")
+    aa('--db_f', default="/isc2021/data/db_siamese.hdf5", help="write query features to this file")
+    aa('--net', default="/isc2021/data/siamese.pth", help="save network parameters to this file")
 
     args = parser.parse_args()
     args.scales = [float(x) for x in args.scales.split(",")]
@@ -264,36 +300,22 @@ def main():
     else:
         print("hardware_image_description:", torch.cuda.get_device_name(0))
 
-    image_list = [l.strip() for l in open(args.file_list, "r")]
+    # image_list = [l.strip() for l in open(args.file_list, "r")]
+    #
+    # if args.i1 == -1:
+    #     args.i1 = len(image_list)
+    # image_list = image_list[args.i0:args.i1]
+    #
+    # # full path name for the image
+    # image_dir = args.image_dir
+    # if not image_dir.endswith('/'):
+    #     image_dir += "/"
+    #
+    # image_list = [image_dir + fname for fname in image_list]
+    #
+    # print("  found %d images" % (len(image_list)))
 
-    if args.i1 == -1:
-        args.i1 = len(image_list)
-    image_list = image_list[args.i0:args.i1]
-
-    # add jpg suffix if there is none
-    image_list = [
-        fname if "." in fname else fname + ".jpg"
-        for fname in image_list
-    ]
-
-    # full path name for the image
-    image_dir = args.image_dir
-    if not image_dir.endswith('/'):
-        image_dir += "/"
-
-    image_list = [image_dir + fname for fname in image_list]
-
-    print("  found %d images" % (len(image_list)))
-
-    if args.train_pca:
-        rs = np.random.RandomState(123)
-        image_list = [
-            image_list[i]
-            for i in rs.choice(len(image_list), size=args.n_train_pca, replace=False)
-        ]
-        print(f"subsampled {args.n_train_pca} vectors")
-
-    # transform without resizing
+    # transform
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
     if args.model == "transformer" or args.model == "visformer":
@@ -313,83 +335,110 @@ def main():
 
     transforms = torchvision.transforms.Compose(transforms)
 
-    im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
+    if args.train:
+        image_pairs = generate_train_dataset(args.query_list, args.gt_list, args.train_list, args.len)
+        print(f"subsampled {args.len} vectors")
 
-    print("loading model")
-    net = load_model(args.model, args.checkpoint)
-    net.to(args.device)
+        im_pairs = TrainPairs(image_pairs, transform=transforms, imsize=args.imsize)
+        train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers, batch_size=args.batch_size)
+        print("loading model")
+        net = SiameseNetwork(args.model, args.checkpoint)
+        net.to(args.device)
+        criterion = ContrastiveLoss()
+        optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
 
-    print("computing features")
+        for epoch in range(args.epoch):
+            for i, data in enumerate(train_dataloader, 0):
+                q_img, r_img, label = data
+                q_img.to(args.device)
+                r_img.to(args.device)
+                output = net(q_img, r_img)
+                optimizer.zero_grad()
+                loss = criterion(output, label)
+                loss.backward()
+                optimizer.step()
 
-    t0 = time.time()
+                if i % 1000 == 0:
+                    print("Epoch:{},  Current loss {}\n".format(epoch, loss))
 
-    with torch.no_grad():
-        if args.batch_size == 1:
-            all_desc = []
-            for no, x in enumerate(im_dataset):
-                x_cp = copy.deepcopy(x)
-                x = x_cp.to(args.device)
-                print(f"im {no}/{len(im_dataset)}    ", end="\r", flush=True)
-                x = x.unsqueeze(0)
-                feats = []
-                for s in args.scales:
-                    xs = nn.functional.interpolate(x, scale_factor=s, mode='bilinear', align_corners=False)
-                    if args.model == "multigrain_resnet50" or args.model == "zoo_resnet50":
-                        o = resnet_activation_map(net, xs)
-                    else:
-                        o = net(xs)
-                    o = o.cpu().numpy()  # B, C, H, W
-                    o = o[0].reshape(o.shape[1], -1).T
-                    feats.append(o)
+        torch.save(net.state_dict(), args.net)
 
-                feats = np.vstack(feats)
-                gem = gem_npy(feats, p=args.GeM_p)
-                all_desc.append(gem)
 
-            max_batch_size = args.batch_size
 
-            dataloader = torch.utils.data.DataLoader(
-                im_dataset, batch_size=1, shuffle=False,
-                num_workers=args.num_workers
-            )
 
-            for no, x in enumerate(dataloader):
-                x = copy.deepcopy(x[0])  # don't batch
-                buckets[x.shape].append((no, x))
 
-                if len(buckets[x.shape]) >= max_batch_size:
-                    handle_bucket(buckets[x.shape])
-                    del buckets[x.shape]
 
-            for bucket in buckets.values():
-                handle_bucket(bucket)
-
-    all_desc = np.vstack(all_desc)
-
-    t1 = time.time()
-
-    print()
-    print(f"image_description_time: {(t1 - t0) / len(image_list):.5f} s per image")
-
-    if args.train_pca:
-        d = all_desc.shape[1]
-        pca = faiss.PCAMatrix(d, args.pca_dim, -0.5)
-        print(f"Train PCA {pca.d_in} -> {pca.d_out}")
-        pca.train(all_desc)
-        print(f"Storing PCA to {args.pca_file}")
-        faiss.write_VectorTransform(pca, args.pca_file)
-    elif args.pca_file:
-        print("Load PCA matrix", args.pca_file)
-        pca = faiss.read_VectorTransform(args.pca_file)
-        print(f"Apply PCA {pca.d_in} -> {pca.d_out}")
-        all_desc = pca.apply_py(all_desc)
-
-    print("normalizing descriptors")
-    faiss.normalize_L2(all_desc)
-
-    if not args.train_pca:
-        print(f"writing descriptors to {args.o}")
-        write_hdf5_descriptors(all_desc, image_list, args.o)
+    # print("computing features")
+    #
+    # t0 = time.time()
+    #
+    # with torch.no_grad():
+    #     if args.batch_size == 1:
+    #         all_desc = []
+    #         for no, x in enumerate(im_dataset):
+    #             x_cp = copy.deepcopy(x)
+    #             x = x_cp.to(args.device)
+    #             print(f"im {no}/{len(im_dataset)}    ", end="\r", flush=True)
+    #             x = x.unsqueeze(0)
+    #             feats = []
+    #             for s in args.scales:
+    #                 xs = nn.functional.interpolate(x, scale_factor=s, mode='bilinear', align_corners=False)
+    #                 if args.model == "multigrain_resnet50" or args.model == "zoo_resnet50":
+    #                     o = resnet_activation_map(net, xs)
+    #                 else:
+    #                     o = net(xs)
+    #                 o = o.cpu().numpy()  # B, C, H, W
+    #                 o = o[0].reshape(o.shape[1], -1).T
+    #                 feats.append(o)
+    #
+    #             feats = np.vstack(feats)
+    #             gem = gem_npy(feats, p=args.GeM_p)
+    #             all_desc.append(gem)
+    #
+    #         max_batch_size = args.batch_size
+    #
+    #         dataloader = torch.utils.data.DataLoader(
+    #             im_dataset, batch_size=1, shuffle=False,
+    #             num_workers=args.num_workers
+    #         )
+    #
+    #         for no, x in enumerate(dataloader):
+    #             x = copy.deepcopy(x[0])  # don't batch
+    #             buckets[x.shape].append((no, x))
+    #
+    #             if len(buckets[x.shape]) >= max_batch_size:
+    #                 handle_bucket(buckets[x.shape])
+    #                 del buckets[x.shape]
+    #
+    #         for bucket in buckets.values():
+    #             handle_bucket(bucket)
+    #
+    # all_desc = np.vstack(all_desc)
+    #
+    # t1 = time.time()
+    #
+    # print()
+    # print(f"image_description_time: {(t1 - t0) / len(image_list):.5f} s per image")
+    #
+    # if args.train_pca:
+    #     d = all_desc.shape[1]
+    #     pca = faiss.PCAMatrix(d, args.pca_dim, -0.5)
+    #     print(f"Train PCA {pca.d_in} -> {pca.d_out}")
+    #     pca.train(all_desc)
+    #     print(f"Storing PCA to {args.pca_file}")
+    #     faiss.write_VectorTransform(pca, args.pca_file)
+    # elif args.pca_file:
+    #     print("Load PCA matrix", args.pca_file)
+    #     pca = faiss.read_VectorTransform(args.pca_file)
+    #     print(f"Apply PCA {pca.d_in} -> {pca.d_out}")
+    #     all_desc = pca.apply_py(all_desc)
+    #
+    # print("normalizing descriptors")
+    # faiss.normalize_L2(all_desc)
+    #
+    # if not args.train_pca:
+    #     print(f"writing descriptors to {args.o}")
+    #     write_hdf5_descriptors(all_desc, image_list, args.o)
 
 
 if __name__ == "__main__":
