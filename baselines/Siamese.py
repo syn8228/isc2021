@@ -219,7 +219,6 @@ class SiameseNetwork2(nn.Module):
         self.score = nn.PairwiseDistance(p=2)
 
     def forward_once(self, x):
-        x.cuda()
         output = self.head(x)
         #output = output.view(output.size()[0], -1)
         output = self.fc1(output)
@@ -409,6 +408,7 @@ def main():
                 q_img, r_img, label = data
                 q_img.to(args.device)
                 r_img.to(args.device)
+                label.to(args.device)
                 output = net(q_img, r_img)
                 optimizer.zero_grad()
                 loss = criterion(output, label)
