@@ -129,7 +129,7 @@ def gem_npy(x, p=3, eps=1e-6):
     return x ** (1. / p)
 
 
-def generate_train_dataset(query_list, gt_list, train_list, len_data, save_path):
+def generate_train_dataset(query_list, gt_list, train_list, len_data):
     # TODO: generate training list with length len_data
     random.seed(1)
     t_list = list()
@@ -148,8 +148,7 @@ def generate_train_dataset(query_list, gt_list, train_list, len_data, save_path)
             q = QUERY + q + ".jpg"
             t = TRAIN + r + ".jpg"
             t_list.append((q, t, label))
-    data = pd.DataFrame(t_list)
-    data.to_csv(save_path, index=None, header=False, encoding='utf-8')
+    return t_list
 
 
 class SiameseNetwork(nn.Module):
@@ -204,10 +203,10 @@ class ContrastiveLoss(torch.nn.Module):
 
 class TrainPairs(Dataset):
 
-    def __int__(self, img_pairs, transform=None):
+    def __int__(self, img_pairs, imsize=None, transform=None):
         Dataset.__init__(self)
         self.transform = transform
-        self.train_list = pd.read_csv(img_pairs, header=None, sep=',').values
+        self.train_list = img_pairs
 
     def __len__(self):
         return len(self.train_list)
@@ -282,7 +281,6 @@ def main():
     aa('--query_f', default="/isc2021/data/query_siamese.hdf5", help="write query features to this file")
     aa('--db_f', default="/isc2021/data/db_siamese.hdf5", help="write query features to this file")
     aa('--net', default="/isc2021/data/siamese.pth", help="save network parameters to this file")
-    aa('--pair_list', default="/isc2021/data/pairs.csv", help="save generated training pairs to this file")
 
     args = parser.parse_args()
     args.scales = [float(x) for x in args.scales.split(",")]
@@ -343,10 +341,10 @@ def main():
     transforms = torchvision.transforms.Compose(transforms)
 
     if args.train:
-        generate_train_dataset(query_list, gt_list, train_list, args.len, args.pair_list)
+        t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
         print(f"subsampled {args.len} vectors")
 
-        im_pairs = TrainPairs(args.pair_list, transform=transforms, imsize=args.imsize)
+        im_pairs = TrainPairs(t_list, transform=transforms, imsize=args.imsize)
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers, batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork(args.model, args.checkpoint)
