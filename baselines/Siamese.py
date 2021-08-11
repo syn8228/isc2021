@@ -362,7 +362,7 @@ def main():
         im_pairs = ImageList(t_list, transform=transforms, imsize=args.imsize)
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers, batch_size=args.batch_size)
         print("loading model")
-        net = SiameseNetwork(args.model, args.checkpoint)
+        net = SiameseNetwork()
         net.to(args.device)
         criterion = ContrastiveLoss()
         optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
