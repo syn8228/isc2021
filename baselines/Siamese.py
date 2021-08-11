@@ -320,7 +320,7 @@ def main():
     aa('--gt_list', required=True, help="file with reference image filenames")
     aa('--train_list', required=True, help="file with training image filenames")
     aa('--db_list', required=True, help="file with training image filenames")
-    aa('--len', default=10000, type=int, help="nb of training vectors for the SiameseNetwork")
+    aa('--len', default=100, type=int, help="nb of training vectors for the SiameseNetwork")
     aa('--epoch', default=100, type=int, help="nb of training epochs for the SiameseNetwork")
     aa('--i0', default=0, type=int, help="first image to process")
     aa('--i1', default=-1, type=int, help="last image to process + 1")
