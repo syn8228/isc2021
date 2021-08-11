@@ -365,7 +365,7 @@ def main():
         net = SiameseNetwork()
         net.to(args.device)
         criterion = ContrastiveLoss()
-        optimizer = torch.optim.Adam(list(net.parameters()), lr=0.0001, weight_decay=0.0)
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=0.0001, weight_decay=0.0)
 
         for epoch in range(args.epoch):
             for i, data in enumerate(train_dataloader, 0):
