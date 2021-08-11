@@ -232,12 +232,11 @@ class SiameseNetwork2(nn.Module):
 
 
 class ContrastiveLoss(torch.nn.Module):
-    def __int__(self, margin=0.5):
+    def __int__(self):
         super(ContrastiveLoss, self).__init__()
-        self.m = margin
 
     def forward(self, score, label):
-        loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) + label * 0.5 * torch.pow(torch.clamp(self.m - score, min=0.0), 2))
+        loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) + label * 0.5 * torch.pow(torch.clamp(2.0 - score, min=0.0), 2))
         return loss
 
 
