@@ -167,24 +167,24 @@ class SiameseNetwork(nn.Module):
             nn.Linear(512, 256)
         )
 
-        self.score = nn.PairwiseDistance(p=2)
+        #self.score = nn.PairwiseDistance(p=2)
 
 
-    # def forward_head(self, input_img):
-    #     if self.map:
-    #         output = resnet_activation_map(self.head, input_img)
-    #     else:
-    #         output = self.head(input_img)
-    #     output = self.fc1(output)
-    #     return output
+    def forward_head(self, input_img):
+        if self.map:
+            output = resnet_activation_map(self.head, input_img)
+        else:
+            output = self.head(input_img)
+        output = self.fc1(output)
+        return output
 
     def forward(self, query, reference):
         q_out = self.head(query)
         q_out = self.fc1(q_out)
         r_out = self.head(reference)
         r_out = self.fc1(r_out)
-        score = self.score(q_out, r_out)
-        return score
+        #score = self.score(q_out, r_out)
+        return q_out, r_out
 
 
 class ContrastiveLoss(torch.nn.Module):
