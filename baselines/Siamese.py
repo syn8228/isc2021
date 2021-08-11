@@ -166,7 +166,8 @@ class SiameseNetwork(nn.Module):
         self.model.fc = None
         self.model.load_state_dict(state_dict)
         self.head = load_model(self.model, self.check_point)
-        self.head.eval()
+        for p in self.parameters():
+            p.requires_grad = False
 
         d_h = 2048
 
@@ -364,7 +365,7 @@ def main():
         net = SiameseNetwork()
         net.to(args.device)
         criterion = ContrastiveLoss()
-        optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
+        optimizer = torch.optim.Adam(list(net.parameters()), lr=0.0001, weight_decay=0.0)
 
         for epoch in range(args.epoch):
             for i, data in enumerate(train_dataloader, 0):
