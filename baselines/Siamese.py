@@ -406,6 +406,8 @@ def main():
         for epoch in range(args.epoch):
             for i, data in enumerate(train_dataloader, 0):
                 q_img, r_img, label = data
+                q_img = copy.deepcopy(q_img)
+                r_img = copy.deepcopy(r_img)
                 q_img = q_img.to(args.device)
                 r_img = r_img.to(args.device)
                 # label.to(args.device)
