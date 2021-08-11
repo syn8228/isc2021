@@ -400,6 +400,7 @@ def main():
         net = SiameseNetwork2()
         net.to(args.device)
         criterion = ContrastiveLoss()
+        criterion.to(args.device)
         optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
 
         for epoch in range(args.epoch):
