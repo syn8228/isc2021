@@ -399,9 +399,7 @@ def main():
         print("loading model")
         net = SiameseNetwork2()
         net.to(args.device)
-        print(net)
         criterion = ContrastiveLoss()
-        criterion.to(args.device)
         optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
 
         for epoch in range(args.epoch):
@@ -409,9 +407,10 @@ def main():
                 q_img, r_img, label = data
                 q_img = copy.deepcopy(q_img)
                 r_img = copy.deepcopy(r_img)
+                label = copy.deepcopy(label)
                 q_img = q_img.to(args.device)
                 r_img = r_img.to(args.device)
-                # label.to(args.device)
+                label = label.to(args.device)
                 output = net(q_img, r_img)
                 optimizer.zero_grad()
                 loss = criterion(output, label)
