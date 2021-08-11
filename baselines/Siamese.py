@@ -190,8 +190,12 @@ class SiameseNetwork(nn.Module):
         return output
 
     def forward(self, query, reference):
-        q_out = self.forward_head(query)
-        r_out = self.forward_head(reference)
+        if self.map:
+            q_out = resnet_activation_map(self.head, query)
+        else:
+            r_out = resnet_activation_map(self.head, reference)
+        q_out = self.fc1(q_out)
+        r_out = self.fc1(r_out)
         score = self.score(q_out, r_out)
         return score
 
