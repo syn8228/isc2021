@@ -203,7 +203,7 @@ class ContrastiveLoss(torch.nn.Module):
 
 class TrainPairs(Dataset):
 
-    def __int__(self, img_pairs, imsize=None, transform=None):
+    def __int__(self, img_pairs, transform=None):
         Dataset.__init__(self)
         self.transform = transform
         self.train_list = img_pairs
