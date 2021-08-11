@@ -166,8 +166,7 @@ class SiameseNetwork(nn.Module):
         self.model.fc = None
         self.model.load_state_dict(state_dict)
         self.head = load_model(self.model, self.check_point)
-        for p in self.parameters():
-            p.requires_grad = False
+        self.head.eval()
 
         d_h = 2048
 
