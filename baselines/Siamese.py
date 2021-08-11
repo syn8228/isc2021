@@ -235,13 +235,22 @@ class ImageList(Dataset):
         return len(self.image_list)
 
     def __getitem__(self, i):
-        x = Image.open(self.image_list[i])
-        x = x.convert("RGB")
-        if self.imsize is not None:
-            x.thumbnail((self.imsize, self.imsize), Image.ANTIALIAS)
+        # x = Image.open(self.image_list[i])
+        # x = x.convert("RGB")
+        # if self.imsize is not None:
+        #     x.thumbnail((self.imsize, self.imsize), Image.ANTIALIAS)
+        # if self.transform is not None:
+        #     x = self.transform(x)
+        # return x
+        q, r, label = self.image_list[i]
+        query_image = Image.open(q)
+        db_image = Image.open(r)
+        query_image = query_image.convert("RGB")
+        db_image = db_image.convert("RGB")
         if self.transform is not None:
-            x = self.transform(x)
-        return x
+            query_image = self.transform(query_image)
+            db_image = self.transform(db_image)
+        return query_image, db_image, label
 
 
 def main():
@@ -344,7 +353,8 @@ def main():
         t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
         print(f"subsampled {args.len} vectors")
 
-        im_pairs = TrainPairs(t_list, transform=transforms, imsize=args.imsize)
+        # im_pairs = TrainPairs(t_list, transform=transforms, imsize=args.imsize)
+        im_pairs = ImageList(t_list, transform=transforms, imsize=args.imsize)
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers, batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork(args.model, args.checkpoint)
