@@ -155,7 +155,9 @@ class SiameseNetwork(nn.Module):
     def __int__(self, model, check_point):
         super(SiameseNetwork, self).__init__()
         # hard shared head parameters
-        self.head = load_model(model, check_point)
+        self.model = model
+        self.check_point = check_point
+        self.head = load_model(self.model, self.check_point)
         for p in self.parameters():
             p.requires_grad = False
 
