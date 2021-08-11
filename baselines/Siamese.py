@@ -153,61 +153,8 @@ def generate_train_dataset(query_list, gt_list, train_list, len_data):
 
 
 class SiameseNetwork(nn.Module):
-    def __int__(self):
-        super(SiameseNetwork, self).__init__()
-        # hard shared head parameters
-        self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
-        self.head.eval()
-
-        d_h = 1000
-
-        self.fc1 = nn.Sequential(
-            nn.Linear(d_h, 512),
-            nn.Linear(512, 256)
-        )
-
-        self.score = nn.PairwiseDistance(p=2)
-
-
-    def forward_head(self, input_img):
-        if self.map:
-            output = resnet_activation_map(self.head, input_img)
-        else:
-            output = self.head(input_img)
-        output = self.fc1(output)
-        return output
-
-    def forward(self, query, reference):
-        q_out = self.head(query)
-        q_out = self.fc1(q_out)
-        r_out = self.head(reference)
-        r_out = self.fc1(r_out)
-        score = self.score(q_out, r_out)
-        return score
-
-
-class SiameseNetwork2(nn.Module):
     def __init__(self):
-        super(SiameseNetwork2, self).__init__()
-        # self.cnn1 = nn.Sequential(
-        #     nn.ReflectionPad2d(1),
-        #     nn.Conv2d(1, 4, kernel_size=3),
-        #     nn.ReLU(inplace=True),
-        #     nn.BatchNorm2d(4),
-        #     nn.Dropout2d(p=.2),
-        #
-        #     nn.ReflectionPad2d(1),
-        #     nn.Conv2d(4, 8, kernel_size=3),
-        #     nn.ReLU(inplace=True),
-        #     nn.BatchNorm2d(8),
-        #     nn.Dropout2d(p=.2),
-        #
-        #     nn.ReflectionPad2d(1),
-        #     nn.Conv2d(8, 8, kernel_size=3),
-        #     nn.ReLU(inplace=True),
-        #     nn.BatchNorm2d(8),
-        #     nn.Dropout2d(p=.2),
-        # )
+        super(SiameseNetwork, self).__init__()
         self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
         self.head.eval()
 
@@ -220,7 +167,6 @@ class SiameseNetwork2(nn.Module):
 
     def forward_once(self, x):
         output = self.head(x)
-        #output = output.view(output.size()[0], -1)
         output = self.fc1(output)
         return output
 
@@ -320,15 +266,15 @@ def main():
     aa('--gt_list', required=True, help="file with reference image filenames")
     aa('--train_list', required=True, help="file with training image filenames")
     aa('--db_list', required=True, help="file with training image filenames")
-    aa('--len', default=100, type=int, help="nb of training vectors for the SiameseNetwork")
+    aa('--len', default=10000, type=int, help="nb of training vectors for the SiameseNetwork")
     aa('--epoch', default=100, type=int, help="nb of training epochs for the SiameseNetwork")
     aa('--i0', default=0, type=int, help="first image to process")
     aa('--i1', default=-1, type=int, help="last image to process + 1")
 
     group = parser.add_argument_group('output options')
-    aa('--query_f', default="/isc2021/data/query_siamese.hdf5", help="write query features to this file")
-    aa('--db_f', default="/isc2021/data/db_siamese.hdf5", help="write query features to this file")
-    aa('--net', default="/isc2021/data/siamese.pth", help="save network parameters to this file")
+    aa('--query_f', default="isc2021/data/query_siamese.hdf5", help="write query features to this file")
+    aa('--db_f', default="isc2021/data/db_siamese.hdf5", help="write query features to this file")
+    aa('--net', default="isc2021/data/siamese.pth", help="save network parameters to this file")
 
     args = parser.parse_args()
     args.scales = [float(x) for x in args.scales.split(",")]
@@ -396,7 +342,7 @@ def main():
         im_pairs = ImageList(t_list, transform=transforms, imsize=args.imsize)
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers, batch_size=args.batch_size)
         print("loading model")
-        net = SiameseNetwork2()
+        net = SiameseNetwork()
         net.to(args.device)
         criterion = ContrastiveLoss()
         criterion.to(args.device)
