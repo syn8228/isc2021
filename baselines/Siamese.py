@@ -190,8 +190,10 @@ class SiameseNetwork(nn.Module):
         return output
 
     def forward(self, query, reference):
-        q_out = self.forward_head(query)
-        r_out = self.forward_head(reference)
+        q_out = self.head(query)
+        q_out = self.fc1(q_out)
+        r_out = self.head(reference)
+        r_out = self.fc1(r_out)
         score = self.score(q_out, r_out)
         return score
 
@@ -363,10 +365,9 @@ def main():
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers, batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork()
-        print(net)
         net.to(args.device)
         criterion = ContrastiveLoss()
-        optimizer = torch.optim.Adam(list(net.parameters()), lr=0.0001, weight_decay=0.0)
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=0.0001, weight_decay=0.0)
 
         for epoch in range(args.epoch):
             for i, data in enumerate(train_dataloader, 0):
