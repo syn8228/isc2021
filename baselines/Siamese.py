@@ -368,7 +368,7 @@ def main():
         val_pairs = ImageList(v_list, transform=transforms, imsize=args.imsize)
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
-        val_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
+        val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork()
@@ -398,6 +398,7 @@ def main():
                     loss_history.clear()
                     val_loss = 0.0
                     print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
+                    torch.cuda.empty_cache()
                     for j, data in enumerate(val_dataloader, 0):
                         q_img, r_img, label = data
                         q_img_cp = copy.deepcopy(q_img)
@@ -409,6 +410,7 @@ def main():
                         output = net(q_img, r_img)
                         val_loss += criterion(output, label)
                     print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss/200))
+                    torch.cuda.empty_cache()
 
         torch.save(net.state_dict(), args.net)
 
