@@ -134,7 +134,7 @@ def generate_train_dataset(query_list, gt_list, train_list, len_data):
     # TODO: generate training list with length len_data
     random.seed(1)
     t_list = list()
-    gt_list = gt_list[0: int(len(gt_list)/2)]
+    #gt_list = gt_list[0: int(len(gt_list)/2)]
     for i in range(len_data):
         label = random.randint(0, 1)
         if label == 1:
