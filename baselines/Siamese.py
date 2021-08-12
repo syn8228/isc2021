@@ -376,7 +376,7 @@ def main():
         criterion = ContrastiveLoss()
         criterion.to(args.device)
         optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
-        loss = 0.0
+        loss_history = list()
         for epoch in range(args.epoch):
             for i, data in enumerate(train_dataloader, 0):
                 q_img, r_img, label = data
@@ -388,13 +388,14 @@ def main():
                 label = label_cp.to(args.device)
                 output = net(q_img, r_img)
                 optimizer.zero_grad()
-                loss += criterion(output, label)
+                loss = criterion(output, label)
                 loss.backward()
                 optimizer.step()
+                loss_history.append(loss)
 
-                if (i+1) % 100 == 0:
-                    mean_loss = loss/100
-                    loss = 0.0
+                if i % 100 == 0:
+                    mean_loss = torch.mean(torch.Tensor(loss_history))
+                    loss_history.clear()
                     val_loss = 0.0
                     print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
                     for j, data in enumerate(val_dataloader, 0):
@@ -408,6 +409,7 @@ def main():
                         output = net(q_img, r_img)
                         val_loss += criterion(output, label)
                     print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss/200))
+
 
         torch.save(net.state_dict(), args.net)
 
