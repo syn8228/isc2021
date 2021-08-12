@@ -137,7 +137,7 @@ def generate_train_dataset(query_list, gt_list, train_list, len_data):
     #gt_list = gt_list[0: int(len(gt_list)/2)]
     for i in range(len_data):
         label = random.randint(0, 1)
-        if label == 1:
+        if label == 0:
             gt = random.sample(gt_list, 1)[0]
             q = gt.query
             r = gt.db
@@ -160,7 +160,7 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
     gt_list = gt_list[int(len(gt_list) / 2): -1]
     for i in range(len_data):
         label = random.randint(0, 1)
-        if label == 1:
+        if label == 0:
             gt = random.sample(gt_list, 1)[0]
             q = gt.query
             r = gt.db
@@ -180,7 +180,8 @@ class SiameseNetwork(nn.Module):
     def __init__(self):
         super(SiameseNetwork, self).__init__()
         self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
-        self.head.eval()
+        for p in self.parameters():
+            p.requires_grad = False
 
         self.fc1 = nn.Sequential(
             nn.Linear(1000, 512),
@@ -375,7 +376,7 @@ def main():
         net.to(args.device)
         criterion = ContrastiveLoss()
         criterion.to(args.device)
-        optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=0.0001, weight_decay=0.0)
         loss_history = list()
         for epoch in range(args.epoch):
             for i, data in enumerate(train_dataloader, 0):
@@ -393,10 +394,10 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if i % 100 == 0:
+                if (i+1) % 100 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
-                    val_loss = 0.0
+                    # val_loss = 0.0
                     print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
                     # for j, data in enumerate(val_dataloader, 0):
                     #     q_img, r_img, label = data
