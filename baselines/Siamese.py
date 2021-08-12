@@ -134,7 +134,7 @@ def generate_train_dataset(query_list, gt_list, train_list, len_data):
     # TODO: generate training list with length len_data
     random.seed(1)
     t_list = list()
-    #gt_list = gt_list[0: int(len(gt_list)/2)]
+    gt_list = gt_list[0: int(len(gt_list)/2)]
     for i in range(len_data):
         label = random.randint(0, 1)
         if label == 0:
@@ -361,16 +361,16 @@ def main():
 
     if args.train:
         t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
-        # v_list = generate_validation_dataset(query_list, gt_list, train_list, 200)
+        v_list = generate_validation_dataset(query_list, gt_list, train_list, 200)
         print(f"subsampled {args.len} vectors")
 
         # im_pairs = TrainPairs(t_list, transform=transforms, imsize=args.imsize)
         im_pairs = ImageList(t_list, transform=transforms, imsize=args.imsize)
-        #val_pairs = ImageList(v_list, transform=transforms, imsize=args.imsize)
+        val_pairs = ImageList(v_list, transform=transforms, imsize=args.imsize)
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
-        # val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
-        #                               batch_size=args.batch_size)
+        val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
+                                      batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork()
         net.to(args.device)
@@ -397,19 +397,20 @@ def main():
                 if (i+1) % 100 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
-                    # val_loss = 0.0
+                    val_loss = 0.0
                     print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
-                    # for j, data in enumerate(val_dataloader, 0):
-                    #     q_img, r_img, label = data
-                    #     q_img_cp = copy.deepcopy(q_img)
-                    #     r_img_cp = copy.deepcopy(r_img)
-                    #     label_cp = copy.deepcopy(label)
-                    #     q_img = q_img_cp.to(args.device)
-                    #     r_img = r_img_cp.to(args.device)
-                    #     label = label_cp.to(args.device)
-                    #     output = net(q_img, r_img)
-                    #     val_loss += criterion(output, label)
-                    # print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss/200))
+                    with torch.no_grad():
+                        for j, data in enumerate(val_dataloader, 0):
+                            q_img, r_img, label = data
+                            q_img_cp = copy.deepcopy(q_img)
+                            r_img_cp = copy.deepcopy(r_img)
+                            label_cp = copy.deepcopy(label)
+                            q_img = q_img_cp.to(args.device)
+                            r_img = r_img_cp.to(args.device)
+                            label = label_cp.to(args.device)
+                            output = net(q_img, r_img)
+                            val_loss += criterion(output, label)
+                    print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss/200))
 
 
         torch.save(net.state_dict(), args.net)
