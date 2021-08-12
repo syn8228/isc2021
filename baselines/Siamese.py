@@ -365,7 +365,7 @@ def main():
 
         # im_pairs = TrainPairs(t_list, transform=transforms, imsize=args.imsize)
         im_pairs = ImageList(t_list, transform=transforms, imsize=args.imsize)
-        val_pairs = ImageList(v_list, transform=transforms, imsize=args.imsize)
+        #val_pairs = ImageList(v_list, transform=transforms, imsize=args.imsize)
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
         # val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
