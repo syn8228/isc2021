@@ -185,6 +185,7 @@ class SiameseNetwork(nn.Module):
 
         self.fc1 = nn.Sequential(
             nn.Linear(1000, 512),
+            nn.ReLU(),
             nn.Linear(512, 256)
         )
 
