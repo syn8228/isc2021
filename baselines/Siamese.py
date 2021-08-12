@@ -266,7 +266,7 @@ def main():
     aa('--gt_list', required=True, help="file with reference image filenames")
     aa('--train_list', required=True, help="file with training image filenames")
     aa('--db_list', required=True, help="file with training image filenames")
-    aa('--len', default=10000, type=int, help="nb of training vectors for the SiameseNetwork")
+    aa('--len', default=1000, type=int, help="nb of training vectors for the SiameseNetwork")
     aa('--epoch', default=100, type=int, help="nb of training epochs for the SiameseNetwork")
     aa('--i0', default=0, type=int, help="first image to process")
     aa('--i1', default=-1, type=int, help="last image to process + 1")
@@ -347,7 +347,7 @@ def main():
         criterion = ContrastiveLoss()
         criterion.to(args.device)
         optimizer = torch.optim.Adam(net.parameters(), lr=0.0001, weight_decay=0.0)
-
+        loss_history = list()
         for epoch in range(args.epoch):
             for i, data in enumerate(train_dataloader, 0):
                 q_img, r_img, label = data
@@ -362,9 +362,12 @@ def main():
                 loss = criterion(output, label)
                 loss.backward()
                 optimizer.step()
+                loss_history.append(loss)
 
-                if i % 1000 == 0:
-                    print("Epoch:{},  Current loss {}\n".format(epoch, loss))
+                if i % 100 == 0:
+                    mean_loss = torch.mean(torch.Tensor(loss_history))
+                    loss_history.clear()
+                    print("Epoch:{},  Current loss {}\n".format(epoch, mean_loss))
 
         torch.save(net.state_dict(), args.net)
 
