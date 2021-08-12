@@ -398,7 +398,7 @@ def main():
                     loss_history.clear()
                     val_loss = 0.0
                     print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
-                    for i, data in enumerate(val_dataloader, 0):
+                    for j, data in enumerate(val_dataloader, 0):
                         q_img, r_img, label = data
                         q_img_cp = copy.deepcopy(q_img)
                         r_img_cp = copy.deepcopy(r_img)
