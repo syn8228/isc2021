@@ -430,14 +430,14 @@ def main():
                             val_loss += criterion(output, label)
                         val_loss /= 200
                     print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
-            epoch_losses.append(val_loss)
+            epoch_losses.append(val_loss.cpu())
 
             trained_model_name = 'Siamese_Epoch_{}.pth'.format(epoch)
             model_full_path = args.net + trained_model_name
             torch.save(net.state_dict(), model_full_path)
             print('model saved as: {}\n'.format(trained_model_name))
 
-        epoch_losses = np.asarray(epoch_losses.cpu())
+        epoch_losses = np.asarray(epoch_losses)
         best_epoch = np.argmin(epoch_losses)
         best_model_name = 'Siamese_Epoch_{}.pth'.format(best_epoch)
         pth_files = glob.glob(args.net + '*.pth')
