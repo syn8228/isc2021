@@ -168,14 +168,14 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         # self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
         self.head = torchvision.models.resnet50(pretrained=False)
-        # st = torch.load(CHECK)
-        # state_dict = OrderedDict([
-        #     (name[9:], v)
-        #     for name, v in st["model_state"].items() if name.startswith("features.")
-        # ])
-        # self.head.fc
-        # self.head.fc = None
-        # self.head.load_state_dict(state_dict)
+        st = torch.load(CHECK)
+        state_dict = OrderedDict([
+            (name[9:], v)
+            for name, v in st["model_state"].items() if name.startswith("features.")
+        ])
+        self.head.fc
+        self.head.fc = None
+        self.head.load_state_dict(state_dict)
         for p in self.parameters():
             p.requires_grad = False
         self.map = True
