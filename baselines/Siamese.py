@@ -298,7 +298,7 @@ def main():
 
     group = parser.add_argument_group('model options')
     aa('--model', default='multigrain_resnet50', help="model to use")
-    aa('--checkpoint', default='isc2021/data/multigrain_joint_3B_0.5.pth', help='override default checkpoint')
+    aa('--checkpoint', default='Siamese_Epoch_4.pth', help='best saved model name')
     aa('--GeM_p', default=7.0, type=float, help="Power used for GeM pooling")
     aa('--scales', default="1.0", help="scale levels")
     aa('--imsize', default=512, type=int, help="max image size at extraction time")
@@ -430,9 +430,12 @@ def main():
                             val_loss += criterion(output, label)
                     print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss/200))
             epoch_losses.append(mean_loss)
+            
             trained_model_name = 'Siamese_Epoch_{}.pth'.format(epoch)
             model_full_path = args.net + trained_model_name
             torch.save(net.state_dict(), model_full_path)
+            print('model saved as: {}\n'.format(trained_model_name))
+
         epoch_losses = np.asarray(epoch_losses)
         best_epoch = np.argmin(epoch_losses)
         best_model_name = 'Siamese_Epoch_{}.pth'.format(best_epoch)
@@ -440,7 +443,7 @@ def main():
         pth_files.remove(args.net + best_model_name)
         for file in pth_files:
             os.remove(file)
-        print("models saved, best model is: {}".format(best_model_name))
+        print("best model is: {}\n".format(best_model_name))
 
 
 
