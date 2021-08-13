@@ -213,6 +213,7 @@ class SiameseNetwork(nn.Module):
             x = self.head.layer3(x)
             x = self.head.layer4(x)
             x = F.adaptive_avg_pool2d(x, (1, 1))
+            print(x.size())
             output = self.fc1(x)
         else:
             x = self.head(x)
