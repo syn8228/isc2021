@@ -390,7 +390,7 @@ def main():
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
         print("loading model")
-        net = SiameseNetwork()
+        net = SiameseNetwork(args.model)
         net.to(args.device)
         criterion = ContrastiveLoss()
         criterion.to(args.device)
