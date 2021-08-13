@@ -200,6 +200,7 @@ class SiameseNetwork(nn.Module):
             x = self.head.layer4(x)
         else:
             x = self.head(x)
+        print(x.shape)
         output = self.fc1(x)
         return output
 
