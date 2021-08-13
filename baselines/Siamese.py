@@ -179,7 +179,10 @@ class SiameseNetwork(nn.Module):
         self.head = load_model(model, CHECK)
         for p in self.parameters():
             p.requires_grad = False
-        self.map = True
+        if model == "zoo_resnet50" or model == "multigrain_resnet50" or model == "resnet152":
+            self.map = True
+        else:
+            self.map = False
         self.flatten = nn.Flatten()
         self.fc1 = nn.Sequential(
             nn.Linear(2048 * 12 * 12, 512),
