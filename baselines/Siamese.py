@@ -182,7 +182,7 @@ class SiameseNetwork(nn.Module):
         self.map = True
         self.flatten = nn.Flatten()
         self.fc1 = nn.Sequential(
-            nn.Linear(2048, 512),
+            nn.Linear(2048 * 22 * 32, 512),
             nn.ReLU(),
             nn.Linear(512, 256)
         )
