@@ -109,19 +109,6 @@ def load_model(name, checkpoint_file):
 
     assert False
 
-def resnet_activation_map(self, x):
-    x = self.conv1(x)
-    x = self.bn1(x)
-    x = self.relu(x)
-    x = self.maxpool(x)
-
-    x = self.layer1(x)
-    x = self.layer2(x)
-    x = self.layer3(x)
-    x = self.layer4(x)
-
-    return x
-
 
 def gem_npy(x, p=3, eps=1e-6):
     x = np.clip(x, a_min=eps, a_max=np.inf)
@@ -179,12 +166,21 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
 class SiameseNetwork(nn.Module):
     def __init__(self):
         super(SiameseNetwork, self).__init__()
-        self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
+        # self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
+        self.head = torchvision.models.resnet50(pretrained=False)
+        st = torch.load(CHECK)
+        state_dict = OrderedDict([
+            (name[9:], v)
+            for name, v in st["model_state"].items() if name.startswith("features.")
+        ])
+        self.head.fc
+        self.head.fc = None
+        self.head.load_state_dict(state_dict)
         for p in self.parameters():
             p.requires_grad = False
-
+        self.map = True
         self.fc1 = nn.Sequential(
-            nn.Linear(1000, 512),
+            nn.Linear(2048, 512),
             nn.ReLU(),
             nn.Linear(512, 256)
         )
@@ -192,14 +188,25 @@ class SiameseNetwork(nn.Module):
         self.score = nn.PairwiseDistance(p=2)
 
     def forward_once(self, x):
-        output = self.head(x)
-        output = self.fc1(output)
+        if self.map:
+            x = self.head.conv1(x)
+            x = self.head.bn1(x)
+            x = self.head.relu(x)
+            x = self.head.maxpool(x)
+
+            x = self.head.layer1(x)
+            x = self.head.layer2(x)
+            x = self.head.layer3(x)
+            x = self.head.layer4(x)
+        else:
+            x = self.head(x)
+        output = self.fc1(x)
         return output
 
     def forward(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
-        score  = self.score(output1, output2)
+        score = self.score(output1, output2)
         return score
 
 
