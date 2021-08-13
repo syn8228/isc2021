@@ -428,9 +428,10 @@ def main():
                             label = label_cp.to(args.device)
                             output = net(q_img, r_img)
                             val_loss += criterion(output, label)
-                    print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss/200))
-            epoch_losses.append(mean_loss)
-            
+                        val_loss /= 200
+                    print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
+            epoch_losses.append(val_loss)
+
             trained_model_name = 'Siamese_Epoch_{}.pth'.format(epoch)
             model_full_path = args.net + trained_model_name
             torch.save(net.state_dict(), model_full_path)
