@@ -437,7 +437,7 @@ def main():
             torch.save(net.state_dict(), model_full_path)
             print('model saved as: {}\n'.format(trained_model_name))
 
-        epoch_losses = np.asarray(epoch_losses)
+        epoch_losses = np.asarray(epoch_losses.cpu())
         best_epoch = np.argmin(epoch_losses)
         best_model_name = 'Siamese_Epoch_{}.pth'.format(best_epoch)
         pth_files = glob.glob(args.net + '*.pth')
