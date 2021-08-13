@@ -164,7 +164,7 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
 
 
 class SiameseNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, model):
         super(SiameseNetwork, self).__init__()
         # self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
         # self.head = torchvision.models.resnet50(pretrained=False)
@@ -176,13 +176,19 @@ class SiameseNetwork(nn.Module):
         # self.head.fc
         # self.head.fc = None
         # self.head.load_state_dict(state_dict)
-        self.head = torchvision.models.resnet152(pretrained=True)
+        self.head = load_model(model, CHECK)
         for p in self.parameters():
             p.requires_grad = False
         self.map = True
         self.flatten = nn.Flatten()
         self.fc1 = nn.Sequential(
             nn.Linear(2048 * 12 * 12, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256)
+        )
+
+        self.fc2 = nn.Sequential(
+            nn.Linear(1000, 512),
             nn.ReLU(),
             nn.Linear(512, 256)
         )
@@ -201,9 +207,10 @@ class SiameseNetwork(nn.Module):
             x = self.head.layer3(x)
             x = self.head.layer4(x)
             x = self.flatten(x)
+            output = self.fc1(x)
         else:
             x = self.head(x)
-        output = self.fc1(x)
+            output = self.fc2(x)
         return output
 
     def forward(self, input1, input2):
