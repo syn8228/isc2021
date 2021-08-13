@@ -14,6 +14,7 @@ import torch
 import torchvision
 import torchvision.transforms
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 import faiss
@@ -40,7 +41,7 @@ def load_model(name, checkpoint_file):
         print('used model: zoo_resnet50')
         print('--------------------------------------------------------------')
         model = torchvision.models.resnet50(pretrained=True)
-        # model.eval()
+        model.eval()
         return model
 
     if name == "multigrain_resnet50":
@@ -56,7 +57,7 @@ def load_model(name, checkpoint_file):
         model.fc
         model.fc = None
         model.load_state_dict(state_dict)
-        # model.eval()
+        model.eval()
         return model
 
     if name == "vgg":
@@ -64,7 +65,7 @@ def load_model(name, checkpoint_file):
         print('used model: VGG16')
         print('--------------------------------------------------------------')
         model = torchvision.models.vgg16(pretrained=True)
-        # model.eval()
+        model.eval()
         return model
 
     if name == "resnet152":
@@ -72,7 +73,7 @@ def load_model(name, checkpoint_file):
         print('used model: ResNet152')
         print('--------------------------------------------------------------')
         model = torchvision.models.resnet152(pretrained=True)
-        # model.eval()
+        model.eval()
         return model
 
     if name == "efficientnetb1":
@@ -80,7 +81,7 @@ def load_model(name, checkpoint_file):
         print('used model: EfficientNet-b1')
         print('--------------------------------------------------------------')
         model = EfficientNet.from_pretrained('efficientnet-b1')
-        # model.eval()
+        model.eval()
         return model
 
     if name == "efficientnetb7":
@@ -88,7 +89,7 @@ def load_model(name, checkpoint_file):
         print('used model: EfficientNet-b7')
         print('--------------------------------------------------------------')
         model = EfficientNet.from_pretrained('efficientnet-b7')
-        # model.eval()
+        model.eval()
         return model
 
     if name == "transformer":
@@ -96,15 +97,15 @@ def load_model(name, checkpoint_file):
         print('used model: ViT')
         print('--------------------------------------------------------------')
         model = ViT('B_16_imagenet1k', pretrained=True)
-        # model.eval()
+        model.eval()
         return model
 
     if name == "visformer":
         print('--------------------------------------------------------------')
-        print('vit_large_patch16_384')
+        print('used model: vit_large_patch16_384')
         print('--------------------------------------------------------------')
         model = timm.create_model('vit_large_patch16_384', pretrained=True)
-        # model.eval()
+        model.eval()
         return model
 
     assert False
@@ -185,7 +186,9 @@ class SiameseNetwork(nn.Module):
             self.map = False
         self.flatten = nn.Flatten()
         self.fc1 = nn.Sequential(
-            nn.Linear(2048 * 12 * 12, 512),
+            nn.Linear(2048, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 512),
             nn.ReLU(),
             nn.Linear(512, 256)
         )
@@ -209,7 +212,7 @@ class SiameseNetwork(nn.Module):
             x = self.head.layer2(x)
             x = self.head.layer3(x)
             x = self.head.layer4(x)
-            x = self.flatten(x)
+            x = F.adaptive_avg_pool2d(x, (1, 1))
             output = self.fc1(x)
         else:
             x = self.head(x)
@@ -363,17 +366,17 @@ def main():
     # transform
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
-    # if args.model == "transformer" or args.model == "visformer":
-    transforms = [
-        torchvision.transforms.Resize((384, 384)),
-        torchvision.transforms.ToTensor(),
-        torchvision.transforms.Normalize(mean, std)
-    ]
-    # else:
-    #     transforms = [
-    #         torchvision.transforms.ToTensor(),
-    #         torchvision.transforms.Normalize(mean, std)
-    #     ]
+    if args.model == "transformer" or args.model == "visformer":
+        transforms = [
+            torchvision.transforms.Resize((384, 384)),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize(mean, std)
+        ]
+    else:
+        transforms = [
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize(mean, std)
+        ]
 
     if args.transpose != -1:
         transforms.insert(TransposeTransform(args.transpose), 0)
