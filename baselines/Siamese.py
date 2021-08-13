@@ -167,16 +167,6 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
 class SiameseNetwork(nn.Module):
     def __init__(self, model):
         super(SiameseNetwork, self).__init__()
-        # self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
-        # self.head = torchvision.models.resnet50(pretrained=False)
-        # st = torch.load(CHECK)
-        # state_dict = OrderedDict([
-        #     (name[9:], v)
-        #     for name, v in st["model_state"].items() if name.startswith("features.")
-        # ])
-        # self.head.fc
-        # self.head.fc = None
-        # self.head.load_state_dict(state_dict)
         self.head = load_model(model, CHECK)
         for p in self.parameters():
             p.requires_grad = False
@@ -232,33 +222,33 @@ class ContrastiveLoss(torch.nn.Module):
         super(ContrastiveLoss, self).__init__()
 
     def forward(self, score, label):
-        loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) + label * 0.5 * torch.pow(torch.clamp(2.0 - score, min=0.0), 2))
+        loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) +
+                          label * 0.5 * torch.pow(torch.clamp(2.0 - score, min=0.0), 2))
         return loss
 
 
-class TrainPairs(Dataset):
+class ImageList(Dataset):
 
-    def __int__(self, img_pairs, transform=None):
+    def __init__(self, image_list, imsize=None, transform=None):
         Dataset.__init__(self)
+        self.image_list = image_list
         self.transform = transform
-        self.train_list = img_pairs
+        self.imsize = imsize
 
     def __len__(self):
-        return len(self.train_list)
+        return len(self.image_list)
 
     def __getitem__(self, i):
-        q, r, label = self.train_list[i]
-        query_image = Image.open(q)
-        db_image = Image.open(r)
-        query_image = query_image.convert("RGB")
-        db_image = db_image.convert("RGB")
+        x = Image.open(self.image_list[i])
+        x = x.convert("RGB")
+        if self.imsize is not None:
+            x.thumbnail((self.imsize, self.imsize), Image.ANTIALIAS)
         if self.transform is not None:
-            query_image = self.transform(query_image)
-            db_image = self.transform(db_image)
-        return query_image, db_image, label
+            x = self.transform(x)
+        return x
 
 
-class ImageList(Dataset):
+class TrainList(Dataset):
 
     def __init__(self, image_list, imsize=None, transform=None):
         Dataset.__init__(self)
@@ -390,8 +380,8 @@ def main():
         print(f"subsampled {args.len} vectors")
 
         # im_pairs = TrainPairs(t_list, transform=transforms, imsize=args.imsize)
-        im_pairs = ImageList(t_list, transform=transforms, imsize=args.imsize)
-        val_pairs = ImageList(v_list, transform=transforms, imsize=args.imsize)
+        im_pairs = TrainList(t_list, transform=transforms, imsize=args.imsize)
+        val_pairs = TrainList(v_list, transform=transforms, imsize=args.imsize)
         train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
@@ -439,6 +429,7 @@ def main():
 
 
         torch.save(net.state_dict(), args.net)
+        print("model saved")
 
 
 
