@@ -179,8 +179,9 @@ class SiameseNetwork(nn.Module):
         for p in self.parameters():
             p.requires_grad = False
         self.map = True
+        self.flatten = nn.Flatten()
         self.fc1 = nn.Sequential(
-            nn.Linear(2048, 512),
+            nn.Linear(2048*12*16, 512),
             nn.ReLU(),
             nn.Linear(512, 256)
         )
@@ -198,6 +199,7 @@ class SiameseNetwork(nn.Module):
             x = self.head.layer2(x)
             x = self.head.layer3(x)
             x = self.head.layer4(x)
+            x = self.flatten(x)
         else:
             x = self.head(x)
         print(x.shape)
