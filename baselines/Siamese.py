@@ -355,17 +355,17 @@ def main():
     # transform
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
-    if args.model == "transformer" or args.model == "visformer":
-        transforms = [
-            torchvision.transforms.Resize((384, 384)),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean, std)
-        ]
-    else:
-        transforms = [
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean, std)
-        ]
+    # if args.model == "transformer" or args.model == "visformer":
+    transforms = [
+        torchvision.transforms.Resize((384, 384)),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize(mean, std)
+    ]
+    # else:
+    #     transforms = [
+    #         torchvision.transforms.ToTensor(),
+    #         torchvision.transforms.Normalize(mean, std)
+    #     ]
 
     if args.transpose != -1:
         transforms.insert(TransposeTransform(args.transpose), 0)
