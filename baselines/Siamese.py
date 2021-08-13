@@ -166,8 +166,8 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
 class SiameseNetwork(nn.Module):
     def __init__(self):
         super(SiameseNetwork, self).__init__()
-        self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
-        # self.head = torchvision.models.resnet50(pretrained=False)
+        # self.head = timm.create_model('vit_large_patch16_384', pretrained=True)
+        self.head = torchvision.models.resnet50(pretrained=False)
         # st = torch.load(CHECK)
         # state_dict = OrderedDict([
         #     (name[9:], v)
@@ -178,7 +178,7 @@ class SiameseNetwork(nn.Module):
         # self.head.load_state_dict(state_dict)
         for p in self.parameters():
             p.requires_grad = False
-        self.map = False
+        self.map = True
         self.fc1 = nn.Sequential(
             nn.Linear(2048, 512),
             nn.ReLU(),
