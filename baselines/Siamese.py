@@ -464,23 +464,22 @@ def main():
         net.load_state_dict(state_dict)
         net.to(args.device)
         print("checkpoint {} loaded\n".format(args.checkpoint))
-                query_feat, db_feat = [], []
-                for i, x in enumerate(query_dataset):
-                    x_cp = copy.deepcopy(x)
-                    x = x_cp.to(args.device)
-                    with torch.no_grad():
-                        o = net.forward_once(x)
-                        print(o.size)
-                        o = torch.squeeze(o)
-                        print(o.size)
-                    break
+        with torch.no_grad():
+            query_feat, db_feat = [], []
+            for i, x in enumerate(query_dataset):
+                x_cp = copy.deepcopy(x)
+                x = x_cp.to(args.device)
+                o = net.forward_once(x)
+                print(o.size)
+                o = torch.squeeze(o)
+                print(o.size)
+                break
 
-                for i, x in enumerate(db_dataset):
-                    x_cp = copy.deepcopy(x)
-                    x = x_cp.to(args.device)
-                    with torch.no_grad():
-                        o = net.forward_once(x)
-                    break
+            for i, x in enumerate(db_dataset):
+                x_cp = copy.deepcopy(x)
+                x = x_cp.to(args.device)
+                o = net.forward_once(x)
+                break
 
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
     #
