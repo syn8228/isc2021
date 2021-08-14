@@ -458,11 +458,23 @@ def main():
         query_images, db_images = generate_extraction_dataset(query_list, db_list)
         query_dataset = ImageList(query_images, transforms)
         db_dataset = ImageList(db_list, transforms)
+        query_dataloader = DataLoader(dataset=query_dataset, shuffle=False, num_workers=args.num_workers,
+                                      batch_size=args.batch_size)
+        db_dataloader = DataLoader(dataset=db_dataset, shuffle=False, num_workers=args.num_workers,
+                                   batch_size=args.batch_size)
 
         net = SiameseNetwork(args.model)
         state_dict = torch.load(args.net + args.checkpoint)
         net.load_state_dict(state_dict)
         print("checkpoint {} loaded\n".format(args.checkpoint))
+        with torch.no_grad():
+                query_feat, db_feat = [], []
+                for i, data in enumerate(query_dataloader, 0):
+                    o = net.forward_once(data)
+                    print(o.size)
+                    o = torch.squeeze(o)
+                    print(o.size)
+                    break
 
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
     #
