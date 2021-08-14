@@ -456,23 +456,30 @@ def main():
     else:
         print("computing features")
         query_images, db_images = generate_extraction_dataset(query_list, db_list)
-        query_dataset = ImageList(query_images, transforms)
-        db_dataset = ImageList(db_list, transforms)
+        query_dataset = ImageList(query_images, transform=transforms)
+        db_dataset = ImageList(db_list, transform=transforms)
 
         net = SiameseNetwork(args.model)
         state_dict = torch.load(args.net + args.checkpoint)
         net.load_state_dict(state_dict)
         net.to(args.device)
         print("checkpoint {} loaded\n".format(args.checkpoint))
-
-        query_feat, db_feat = list(), list()
         with torch.no_grad():
-            if args.batch_size == 1:
-                all_desc = list()
-                for no, x in enumerate(query_dataset):
-                    x = x.to(args.device)
-                    break
+            query_feat, db_feat = list(), list()
+            for i, x in enumerate(query_dataset):
+                x_cp = copy.deepcopy(x)
+                x = x_cp.to(args.device)
+                o = net.forward_once(x)
+                print(o.size)
+                o = torch.squeeze(o)
+                print(o.size)
+                break
 
+            for i, x in enumerate(db_dataset):
+                x_cp = copy.deepcopy(x)
+                x = x_cp.to(args.device)
+                o = net.forward_once(x)
+                break
 
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
     #
