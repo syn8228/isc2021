@@ -469,6 +469,7 @@ def main():
             for i, x in enumerate(query_dataset):
                 x_cp = copy.deepcopy(x)
                 x = x_cp.to(args.device)
+                x = x.unsqueeze(0)
                 o = net.forward_once(x)
                 print(o.size)
                 o = torch.squeeze(o)
@@ -478,6 +479,7 @@ def main():
             for i, x in enumerate(db_dataset):
                 x_cp = copy.deepcopy(x)
                 x = x_cp.to(args.device)
+                x = x.unsqueeze(0)
                 o = net.forward_once(x)
                 break
 
