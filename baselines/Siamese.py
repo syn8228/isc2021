@@ -466,15 +466,11 @@ def main():
         print("checkpoint {} loaded\n".format(args.checkpoint))
 
         query_feat, db_feat = list(), list()
-        for i, x in enumerate(query_dataset):
-            x_cp = copy.deepcopy(x)
-            x = x_cp.to(args.device)
-            with torch.no_grad():
-                o = net.forward_once(x)
-                print(o.size)
-                o = torch.squeeze(o)
-                print(o.size)
-            break
+        with torch.no_grad():
+            if args.batch_size == 1:
+                all_desc = list()
+                for no, x in enumerate(query_dataset):
+                    x = x.to(args.device)
 
 
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
