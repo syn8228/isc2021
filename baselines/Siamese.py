@@ -476,6 +476,10 @@ def main():
                     print(o.size)
                     break
 
+                for i, data in enumerate(db_dataloader, 0):
+                    o = net.forward_once(data)
+                    break
+
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
     #
     # print("loading model")
