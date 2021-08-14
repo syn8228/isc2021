@@ -248,13 +248,12 @@ class ImageList(Dataset):
 
     def __getitem__(self, i):
         x = Image.open(self.image_list[i])
-        label = 1
         x = x.convert("RGB")
         if self.imsize is not None:
             x.thumbnail((self.imsize, self.imsize), Image.ANTIALIAS)
         if self.transform is not None:
             x = self.transform(x)
-        return x, label
+        return x
 
 
 class TrainList(Dataset):
@@ -459,10 +458,6 @@ def main():
         query_images, db_images = generate_extraction_dataset(query_list, db_list)
         query_dataset = ImageList(query_images, transforms)
         db_dataset = ImageList(db_list, transforms)
-        query_dataloader = DataLoader(dataset=query_dataset, shuffle=False, num_workers=args.num_workers,
-                                      batch_size=args.batch_size)
-        db_dataloader = DataLoader(dataset=db_dataset, shuffle=False, num_workers=args.num_workers,
-                                   batch_size=args.batch_size)
 
         net = SiameseNetwork(args.model)
         state_dict = torch.load(args.net + args.checkpoint)
@@ -470,17 +465,19 @@ def main():
         print("checkpoint {} loaded\n".format(args.checkpoint))
         with torch.no_grad():
                 query_feat, db_feat = [], []
-                for i, data in enumerate(query_dataloader, 0):
-                    image, _ = data
-                    o = net.forward_once(image)
+                for i, x in enumerate(query_dataset):
+                    x_cp = copy.deepcopy(x)
+                    x = x_cp.to(args.device)
+                    o = net.forward_once(x)
                     print(o.size)
                     o = torch.squeeze(o)
                     print(o.size)
                     break
 
-                for i, data in enumerate(db_dataloader, 0):
-                    image, _ = data
-                    o = net.forward_once(image)
+                for i, x in enumerate(db_dataset):
+                    x_cp = copy.deepcopy(x)
+                    x = x_cp.to(args.device)
+                    o = net.forward_once(x)
                     break
 
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
