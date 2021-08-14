@@ -376,7 +376,7 @@ def main():
     if args.train:
         print("training network")
         t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
-        v_list = generate_validation_dataset(query_list, gt_list, train_list, 200)
+        v_list = generate_validation_dataset(query_list, gt_list, train_list, 1000)
         print(f"subsampled {args.len} vectors")
 
         # im_pairs = TrainPairs(t_list, transform=transforms, imsize=args.imsize)
@@ -410,7 +410,7 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if (i+1) % 100 == 0:
+                if (i+1) % 1000 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
                     val_loss = 0.0
@@ -426,7 +426,7 @@ def main():
                             label = label_cp.to(args.device)
                             output = net(q_img, r_img)
                             val_loss += criterion(output, label)
-                        val_loss /= 200
+                        val_loss /= 1000
                     print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
 
