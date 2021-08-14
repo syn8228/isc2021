@@ -466,22 +466,32 @@ def main():
         print("checkpoint {} loaded\n".format(args.checkpoint))
         with torch.no_grad():
             query_feat, db_feat = list(), list()
+            t0 = time.time()
             for i, x in enumerate(query_dataset):
                 x_cp = copy.deepcopy(x)
                 x = x_cp.to(args.device)
                 x = x.unsqueeze(0)
                 o = net.forward_once(x)
-                print(o.size())
                 o = torch.squeeze(o)
-                print(o.size())
-                break
+                query_feat.append(o.cpu())
+            t1 = time.time()
+            write_hdf5_descriptors(query_feat, query_images, args.query_f)
+            query_feat.clear()
+            print(f"writing query descriptors to {args.query_f}")
+            print(f"query_image_description_time: {(t1 - t0) / len(query_images):.5f} s per image")
 
+            t0 = time.time()
             for i, x in enumerate(db_dataset):
                 x_cp = copy.deepcopy(x)
                 x = x_cp.to(args.device)
                 x = x.unsqueeze(0)
                 o = net.forward_once(x)
-                break
+                o = torch.squeeze(o)
+                db_feat.append(o.cpu())
+            t1 = time.time()
+            write_hdf5_descriptors(db_feat, db_images, args.db_f)
+            print(f"writing query descriptors to {args.db_f}")
+            print(f"db_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
 
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
     #
