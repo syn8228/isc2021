@@ -253,7 +253,7 @@ class ImageList(Dataset):
             x.thumbnail((self.imsize, self.imsize), Image.ANTIALIAS)
         if self.transform is not None:
             x = self.transform(x)
-        return x
+        return x, 1
 
 
 class TrainList(Dataset):
@@ -470,14 +470,16 @@ def main():
         with torch.no_grad():
                 query_feat, db_feat = [], []
                 for i, data in enumerate(query_dataloader, 0):
-                    o = net.forward_once(data)
+                    image, _ = data
+                    o = net.forward_once(image)
                     print(o.size)
                     o = torch.squeeze(o)
                     print(o.size)
                     break
 
                 for i, data in enumerate(db_dataloader, 0):
-                    o = net.forward_once(data)
+                    image, _ = data
+                    o = net.forward_once(image)
                     break
 
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
