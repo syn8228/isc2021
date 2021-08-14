@@ -166,6 +166,12 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
     return v_list
 
 
+def generate_extraction_dataset(query_list, db_list):
+    query_images = [QUERY + q + ".jpg" for q in query_list]
+    db_images = [REFERENCE + r + ".jpg" for r in db_list]
+    return query_images, db_images
+
+
 class SiameseNetwork(nn.Module):
     def __init__(self, model):
         super(SiameseNetwork, self).__init__()
@@ -377,6 +383,7 @@ def main():
     transforms = torchvision.transforms.Compose(transforms)
 
     if args.train:
+        print("training network")
         t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
         v_list = generate_validation_dataset(query_list, gt_list, train_list, 200)
         print(f"subsampled {args.len} vectors")
@@ -446,11 +453,23 @@ def main():
             os.remove(file)
         print("best model is: {}\n".format(best_model_name))
 
+    else:
+        print("computing features")
+        query_images, db_images = generate_extraction_dataset(query_list, db_list)
+        query_dataset = ImageList(query_images, transforms)
+        db_dataset = ImageList(db_list, transforms)
 
+        net = SiameseNetwork(args.model)
+        state_dict = torch.load(args.net + args.checkpoint)
+        net.load_state_dict(state_dict)
+        print("checkpoint {} loaded\n".format(args.checkpoint))
 
-
-
-
+    # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
+    #
+    # print("loading model")
+    # net = load_model(args.model, args.checkpoint)
+    # net.to(args.device)
+    #
     # print("computing features")
     #
     # t0 = time.time()
@@ -459,24 +478,42 @@ def main():
     #     if args.batch_size == 1:
     #         all_desc = []
     #         for no, x in enumerate(im_dataset):
-    #             x_cp = copy.deepcopy(x)
-    #             x = x_cp.to(args.device)
+    #             x = x.to(args.device)
     #             print(f"im {no}/{len(im_dataset)}    ", end="\r", flush=True)
     #             x = x.unsqueeze(0)
     #             feats = []
     #             for s in args.scales:
     #                 xs = nn.functional.interpolate(x, scale_factor=s, mode='bilinear', align_corners=False)
-    #                 if args.model == "multigrain_resnet50" or args.model == "zoo_resnet50":
-    #                     o = resnet_activation_map(net, xs)
-    #                 else:
-    #                     o = net(xs)
-    #                 o = o.cpu().numpy()  # B, C, H, W
+    #                 o = resnet_activation_map(net, xs)
+    #                 o = o.cpu().numpy()    # B, C, H, W
     #                 o = o[0].reshape(o.shape[1], -1).T
     #                 feats.append(o)
     #
     #             feats = np.vstack(feats)
     #             gem = gem_npy(feats, p=args.GeM_p)
     #             all_desc.append(gem)
+    #
+    #     else:
+    #         all_desc = [None] * len(im_dataset)
+    #         ndesc = [0]
+    #         buckets = defaultdict(list)
+    #
+    #         def handle_bucket(bucket):
+    #             ndesc[0] += len(bucket)
+    #             x = torch.stack([xi for no, xi in bucket])
+    #             x = x.to(args.device)
+    #             print(f"ndesc {ndesc[0]} / {len(all_desc)} handle bucket of shape {x.shape}\r", end="", flush=True)
+    #             feats = []
+    #             for s in args.scales:
+    #                 xs = nn.functional.interpolate(x, scale_factor=s, mode='bilinear', align_corners=False)
+    #                 o = resnet_activation_map(net, xs)
+    #                 o = o.cpu().numpy()    # B, C, H, W
+    #                 feats.append(o)
+    #
+    #             for i, (no, _) in enumerate(bucket):
+    #                 feats_i = np.vstack([f[i].reshape(f[i].shape[0], -1).T for f in feats])
+    #                 gem = gem_npy(feats_i, p=args.GeM_p)
+    #                 all_desc[no] = gem
     #
     #         max_batch_size = args.batch_size
     #
@@ -486,7 +523,7 @@ def main():
     #         )
     #
     #         for no, x in enumerate(dataloader):
-    #             x = copy.deepcopy(x[0])  # don't batch
+    #             x = x[0]  # don't batch
     #             buckets[x.shape].append((no, x))
     #
     #             if len(buckets[x.shape]) >= max_batch_size:
