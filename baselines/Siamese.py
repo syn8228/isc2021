@@ -457,7 +457,7 @@ def main():
         print("computing features")
         query_images, db_images = generate_extraction_dataset(query_list, db_list)
         query_dataset = ImageList(query_images, transform=transforms)
-        db_dataset = ImageList(db_list, transform=transforms)
+        db_dataset = ImageList(db_images, transform=transforms)
 
         net = SiameseNetwork(args.model)
         state_dict = torch.load(args.net + args.checkpoint)
@@ -471,9 +471,9 @@ def main():
                 x = x_cp.to(args.device)
                 x = x.unsqueeze(0)
                 o = net.forward_once(x)
-                print(o.size)
+                print(o.size())
                 o = torch.squeeze(o)
-                print(o.size)
+                print(o.size())
                 break
 
             for i, x in enumerate(db_dataset):
