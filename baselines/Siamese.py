@@ -467,7 +467,7 @@ def main():
                 query_feat, db_feat = [], []
                 for i, x in enumerate(query_dataset):
                     x_cp = copy.deepcopy(x)
-                    x = x_cp.to(args.device)
+                    x = x_cp.cuda()
                     o = net.forward_once(x)
                     print(o.size)
                     o = torch.squeeze(o)
