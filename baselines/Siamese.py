@@ -248,12 +248,13 @@ class ImageList(Dataset):
 
     def __getitem__(self, i):
         x = Image.open(self.image_list[i])
+        label = 1
         x = x.convert("RGB")
         if self.imsize is not None:
             x.thumbnail((self.imsize, self.imsize), Image.ANTIALIAS)
         if self.transform is not None:
             x = self.transform(x)
-        return x, 1
+        return x, label
 
 
 class TrainList(Dataset):
