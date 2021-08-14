@@ -471,6 +471,7 @@ def main():
                 all_desc = list()
                 for no, x in enumerate(query_dataset):
                     x = x.to(args.device)
+                    break
 
 
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
