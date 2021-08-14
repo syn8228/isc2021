@@ -231,7 +231,7 @@ class ContrastiveLoss(torch.nn.Module):
 
     def forward(self, score, label):
         loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) +
-                          label * 0.5 * torch.pow(torch.clamp(2.0 - score, min=0.0), 2))
+                          label * 0.5 * torch.pow(torch.clamp(5.0 - score, min=0.0), 2))
         return loss
 
 
@@ -249,8 +249,6 @@ class ImageList(Dataset):
     def __getitem__(self, i):
         x = Image.open(self.image_list[i])
         x = x.convert("RGB")
-        # if self.imsize is not None:
-        #     x.thumbnail((self.imsize, self.imsize), Image.ANTIALIAS)
         if self.transform is not None:
             x = self.transform(x)
         return x
@@ -268,13 +266,6 @@ class TrainList(Dataset):
         return len(self.image_list)
 
     def __getitem__(self, i):
-        # x = Image.open(self.image_list[i])
-        # x = x.convert("RGB")
-        # if self.imsize is not None:
-        #     x.thumbnail((self.imsize, self.imsize), Image.ANTIALIAS)
-        # if self.transform is not None:
-        #     x = self.transform(x)
-        # return x
         q, r, label = self.image_list[i]
         query_image = Image.open(q)
         db_image = Image.open(r)
