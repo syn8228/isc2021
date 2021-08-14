@@ -477,7 +477,6 @@ def main():
             t1 = time.time()
             query_feat = np.vstack(query_feat)
             write_hdf5_descriptors(query_feat, query_images, args.query_f)
-            query_feat.clear()
             print(f"writing query descriptors to {args.query_f}")
             print(f"query_image_description_time: {(t1 - t0) / len(query_images):.5f} s per image")
 
