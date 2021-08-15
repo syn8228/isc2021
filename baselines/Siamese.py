@@ -499,6 +499,7 @@ def main():
                                           batch_size=args.batch_size)
             for no, data in enumerate(query_loader):
                 images = data
+                images = images.to(args.device)
                 feats = net.forward_once(images)
                 print(feats.size())
                 break
