@@ -461,35 +461,47 @@ def main():
         net.load_state_dict(state_dict)
         net.to(args.device)
         print("checkpoint {} loaded\n".format(args.checkpoint))
-        with torch.no_grad():
-            query_feat, db_feat = list(), list()
-            t0 = time.time()
-            for i, x in enumerate(query_dataset):
-                x_cp = copy.deepcopy(x)
-                x = x_cp.to(args.device)
-                x = x.unsqueeze(0)
-                o = net.forward_once(x)
-                o = torch.squeeze(o)
-                query_feat.append(o.cpu())
-            t1 = time.time()
-            query_feat = np.vstack(query_feat)
-            write_hdf5_descriptors(query_feat, query_images, args.query_f)
-            print(f"writing query descriptors to {args.query_f}")
-            print(f"query_image_description_time: {(t1 - t0) / len(query_images):.5f} s per image")
+        if args.batch_size == 1:
+            with torch.no_grad():
+                query_feat, db_feat = list(), list()
+                t0 = time.time()
+                for i, x in enumerate(query_dataset):
+                    x_cp = copy.deepcopy(x)
+                    x = x_cp.to(args.device)
+                    x = x.unsqueeze(0)
+                    o = net.forward_once(x)
+                    o = torch.squeeze(o)
+                    query_feat.append(o.cpu())
+                t1 = time.time()
+                query_feat = np.vstack(query_feat)
+                write_hdf5_descriptors(query_feat, query_images, args.query_f)
+                print(f"writing query descriptors to {args.query_f}")
+                print(f"query_image_description_time: {(t1 - t0) / len(query_images):.5f} s per image")
 
-            t0 = time.time()
-            for i, x in enumerate(db_dataset):
-                x_cp = copy.deepcopy(x)
-                x = x_cp.to(args.device)
-                x = x.unsqueeze(0)
-                o = net.forward_once(x)
-                o = torch.squeeze(o)
-                db_feat.append(o.cpu())
-            t1 = time.time()
-            db_feat = np.vstack(db_feat)
-            write_hdf5_descriptors(db_feat, db_images, args.db_f)
-            print(f"writing query descriptors to {args.db_f}")
-            print(f"db_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
+                t0 = time.time()
+                for i, x in enumerate(db_dataset):
+                    x_cp = copy.deepcopy(x)
+                    x = x_cp.to(args.device)
+                    x = x.unsqueeze(0)
+                    o = net.forward_once(x)
+                    o = torch.squeeze(o)
+                    db_feat.append(o.cpu())
+                t1 = time.time()
+                db_feat = np.vstack(db_feat)
+                write_hdf5_descriptors(db_feat, db_images, args.db_f)
+                print(f"writing query descriptors to {args.db_f}")
+                print(f"db_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
+
+        else:
+            query_loader = DataLoader(query_dataset, batch_size=args.batch_size,
+                                      shuffel=False, num_workers=args.num_workers)
+            db_loader = DataLoader(db_dataset, batch_size=args.batch_size,
+                                      shuffel=False, num_workers=args.num_workers)
+            for no, data in enumerate(query_loader):
+                images = data
+                feats = net.forward_once(images)
+                print(feats.size())
+                break
 
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
     #
