@@ -493,10 +493,10 @@ def main():
                 print(f"db_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
 
         else:
-            query_loader = DataLoader(query_dataset, batch_size=args.batch_size,
-                                      shuffel=False, num_workers=args.num_workers)
-            db_loader = DataLoader(db_dataset, batch_size=args.batch_size,
-                                      shuffel=False, num_workers=args.num_workers)
+            query_loader = DataLoader(dataset=query_dataset, shuffle=False, num_workers=args.num_workers,
+                                          batch_size=args.batch_size)
+            db_loader = DataLoader(dataset=db_dataset, shuffle=False, num_workers=args.num_workers,
+                                          batch_size=args.batch_size)
             for no, data in enumerate(query_loader):
                 images = data
                 feats = net.forward_once(images)
