@@ -506,7 +506,7 @@ def main():
                     images = data
                     images = images.to(args.device)
                     feats = net.forward_once(images)
-                    query_feats.append(feats.numpy().cpu())
+                    query_feats.append(feats.cpu().numpy())
                 t1 = time.time()
                 query_feats = np.vstack(query_feats)
                 write_hdf5_descriptors(query_feats, query_images, args.query_f)
@@ -518,7 +518,7 @@ def main():
                     images = data
                     images = images.to(args.device)
                     feats = net.forward_once(images)
-                    db_feats.append(feats.numpy().cpu())
+                    db_feats.append(feats.cpu().numpy())
                 t1 = time.time()
                 db_feats = np.vstack(db_feats)
                 write_hdf5_descriptors(db_feats, db_images, args.db_f)
