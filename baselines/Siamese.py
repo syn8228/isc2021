@@ -501,28 +501,29 @@ def main():
             query_feats = list()
             db_feats = list()
             t0 = time.time()
-            for no, data in enumerate(query_loader):
-                images = data
-                images = images.to(args.device)
-                feats = net.forward_once(images)
-                query_feats.append(feats.cpu())
-            t1 = time.time()
-            query_feats = np.vstack(query_feats)
-            write_hdf5_descriptors(query_feats, query_images, args.query_f)
-            print(f"writing query descriptors to {args.db_f}")
-            print(f"db_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
+            with torch.no_grad():
+                for no, data in enumerate(query_loader):
+                    images = data
+                    images = images.to(args.device)
+                    feats = net.forward_once(images)
+                    query_feats.append(feats.numpy().cpu())
+                t1 = time.time()
+                query_feats = np.vstack(query_feats)
+                write_hdf5_descriptors(query_feats, query_images, args.query_f)
+                print(f"writing query descriptors to {args.db_f}")
+                print(f"db_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
 
-            t0 = time.time()
-            for no, data in enumerate(db_loader):
-                images = data
-                images = images.to(args.device)
-                feats = net.forward_once(images)
-                db_feats.append(feats.cpu())
-            t1 = time.time()
-            db_feats = np.vstack(db_feats)
-            write_hdf5_descriptors(db_feats, db_images, args.db_f)
-            print(f"writing reference descriptors to {args.db_f}")
-            print(f"db_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
+                t0 = time.time()
+                for no, data in enumerate(db_loader):
+                    images = data
+                    images = images.to(args.device)
+                    feats = net.forward_once(images)
+                    db_feats.append(feats.numpy().cpu())
+                t1 = time.time()
+                db_feats = np.vstack(db_feats)
+                write_hdf5_descriptors(db_feats, db_images, args.db_f)
+                print(f"writing reference descriptors to {args.db_f}")
+                print(f"db_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
 
     # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
     #
