@@ -419,7 +419,7 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if (i+1) % 1000 == 0:
+                if (i+1) % 200 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
                     val_loss = 0.0
