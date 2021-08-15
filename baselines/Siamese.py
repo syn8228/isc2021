@@ -376,15 +376,15 @@ def main():
     if args.train:
         print("training network")
         # t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
-        # v_list = generate_validation_dataset(query_list, gt_list, train_list, 1000)
+        v_list = generate_validation_dataset(query_list, gt_list, train_list, 2000)
         # print(f"subsampled {args.len} vectors")
         #
         # im_pairs = TrainList(t_list, transform=transforms, imsize=args.imsize)
-        # val_pairs = TrainList(v_list, transform=transforms, imsize=args.imsize)
+        val_pairs = TrainList(v_list, transform=transforms, imsize=args.imsize)
         # train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
         #                               batch_size=args.batch_size)
-        # val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
-        #                               batch_size=args.batch_size)
+        val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
+                                      batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork(args.model)
         net.to(args.device)
@@ -395,15 +395,11 @@ def main():
         epoch_losses = list()
         for epoch in range(args.epoch):
             t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
-            v_list = generate_validation_dataset(query_list, gt_list, train_list, 1000)
             print(f"subsampled {args.len} vectors")
 
             im_pairs = TrainList(t_list, transform=transforms, imsize=args.imsize)
-            val_pairs = TrainList(v_list, transform=transforms, imsize=args.imsize)
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
-            val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
-                                        batch_size=args.batch_size)
             for i, data in enumerate(train_dataloader, 0):
                 q_img, r_img, label = data
                 q_img_cp = copy.deepcopy(q_img)
@@ -436,7 +432,7 @@ def main():
                     label = label_cp.to(args.device)
                     output = net(q_img, r_img)
                     val_loss += criterion(output, label)
-                val_loss /= 1000
+                val_loss /= 2000
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
 
