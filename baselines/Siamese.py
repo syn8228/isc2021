@@ -231,7 +231,7 @@ class ContrastiveLoss(torch.nn.Module):
 
     def forward(self, score, label):
         loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) +
-                          label * 0.5 * torch.pow(torch.clamp(5.0 - score, min=0.0), 2))
+                          label * 0.5 * torch.pow(torch.clamp(10.0 - score, min=0.0), 2))
         return loss
 
 
@@ -391,7 +391,7 @@ def main():
         net.to(args.device)
         criterion = ContrastiveLoss()
         criterion.to(args.device)
-        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=0.0001, weight_decay=0.0)
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=0.00001, weight_decay=0.0)
         loss_history = list()
         epoch_losses = list()
         for epoch in range(args.epoch):
@@ -524,102 +524,6 @@ def main():
                 write_hdf5_descriptors(db_feats, db_images, args.db_f)
                 print(f"writing reference descriptors to {args.db_f}")
                 print(f"db_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
-
-    # im_dataset = ImageList(image_list, transform=transforms, imsize=args.imsize)
-    #
-    # print("loading model")
-    # net = load_model(args.model, args.checkpoint)
-    # net.to(args.device)
-    #
-    # print("computing features")
-    #
-    # t0 = time.time()
-    #
-    # with torch.no_grad():
-    #     if args.batch_size == 1:
-    #         all_desc = []
-    #         for no, x in enumerate(im_dataset):
-    #             x = x.to(args.device)
-    #             print(f"im {no}/{len(im_dataset)}    ", end="\r", flush=True)
-    #             x = x.unsqueeze(0)
-    #             feats = []
-    #             for s in args.scales:
-    #                 xs = nn.functional.interpolate(x, scale_factor=s, mode='bilinear', align_corners=False)
-    #                 o = resnet_activation_map(net, xs)
-    #                 o = o.cpu().numpy()    # B, C, H, W
-    #                 o = o[0].reshape(o.shape[1], -1).T
-    #                 feats.append(o)
-    #
-    #             feats = np.vstack(feats)
-    #             gem = gem_npy(feats, p=args.GeM_p)
-    #             all_desc.append(gem)
-    #
-    #     else:
-    #         all_desc = [None] * len(im_dataset)
-    #         ndesc = [0]
-    #         buckets = defaultdict(list)
-    #
-    #         def handle_bucket(bucket):
-    #             ndesc[0] += len(bucket)
-    #             x = torch.stack([xi for no, xi in bucket])
-    #             x = x.to(args.device)
-    #             print(f"ndesc {ndesc[0]} / {len(all_desc)} handle bucket of shape {x.shape}\r", end="", flush=True)
-    #             feats = []
-    #             for s in args.scales:
-    #                 xs = nn.functional.interpolate(x, scale_factor=s, mode='bilinear', align_corners=False)
-    #                 o = resnet_activation_map(net, xs)
-    #                 o = o.cpu().numpy()    # B, C, H, W
-    #                 feats.append(o)
-    #
-    #             for i, (no, _) in enumerate(bucket):
-    #                 feats_i = np.vstack([f[i].reshape(f[i].shape[0], -1).T for f in feats])
-    #                 gem = gem_npy(feats_i, p=args.GeM_p)
-    #                 all_desc[no] = gem
-    #
-    #         max_batch_size = args.batch_size
-    #
-    #         dataloader = torch.utils.data.DataLoader(
-    #             im_dataset, batch_size=1, shuffle=False,
-    #             num_workers=args.num_workers
-    #         )
-    #
-    #         for no, x in enumerate(dataloader):
-    #             x = x[0]  # don't batch
-    #             buckets[x.shape].append((no, x))
-    #
-    #             if len(buckets[x.shape]) >= max_batch_size:
-    #                 handle_bucket(buckets[x.shape])
-    #                 del buckets[x.shape]
-    #
-    #         for bucket in buckets.values():
-    #             handle_bucket(bucket)
-    #
-    # all_desc = np.vstack(all_desc)
-    #
-    # t1 = time.time()
-    #
-    # print()
-    # print(f"image_description_time: {(t1 - t0) / len(image_list):.5f} s per image")
-    #
-    # if args.train_pca:
-    #     d = all_desc.shape[1]
-    #     pca = faiss.PCAMatrix(d, args.pca_dim, -0.5)
-    #     print(f"Train PCA {pca.d_in} -> {pca.d_out}")
-    #     pca.train(all_desc)
-    #     print(f"Storing PCA to {args.pca_file}")
-    #     faiss.write_VectorTransform(pca, args.pca_file)
-    # elif args.pca_file:
-    #     print("Load PCA matrix", args.pca_file)
-    #     pca = faiss.read_VectorTransform(args.pca_file)
-    #     print(f"Apply PCA {pca.d_in} -> {pca.d_out}")
-    #     all_desc = pca.apply_py(all_desc)
-    #
-    # print("normalizing descriptors")
-    # faiss.normalize_L2(all_desc)
-    #
-    # if not args.train_pca:
-    #     print(f"writing descriptors to {args.o}")
-    #     write_hdf5_descriptors(all_desc, image_list, args.o)
 
 
 if __name__ == "__main__":
