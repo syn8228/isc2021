@@ -484,25 +484,25 @@ def main():
         test_data = TrainList(test_list, transform=transforms, imsize=args.imsize)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
                                  batch_size=args.batch_size)
-
-        for i, data in enumerate(test_loader, 0):
-            img_name = 'test_{}.jpg'.format(i)
-            img_pth = args.images + img_name
-            q_img, r_img, label = data
-            concatenated = torch.cat((q_img, r_img), 0)
-            q_img_cp = copy.deepcopy(q_img)
-            r_img_cp = copy.deepcopy(r_img)
-            label_cp = copy.deepcopy(label)
-            q_img = q_img_cp.to(args.device)
-            r_img = r_img_cp.to(args.device)
-            label = label_cp.to(args.device)
-            score = net(q_img, r_img)
-            if label == 0:
-                label = 'matched'
-            if label == 1:
-                label = 'not matched'
-            imshow(torchvision.utils.make_grid(concatenated),
-                   'Dissimilarity: {:.2f} Label: {}'.format(score, label), should_save=True, pth=img_pth)
+        with torch.no_grad():
+            for i, data in enumerate(test_loader, 0):
+                img_name = 'test_{}.jpg'.format(i)
+                img_pth = args.images + img_name
+                q_img, r_img, label = data
+                concatenated = torch.cat((q_img, r_img), 0)
+                q_img_cp = copy.deepcopy(q_img)
+                r_img_cp = copy.deepcopy(r_img)
+                label_cp = copy.deepcopy(label)
+                q_img = q_img_cp.to(args.device)
+                r_img = r_img_cp.to(args.device)
+                label = label_cp.to(args.device)
+                score = net(q_img, r_img)
+                if label == 0:
+                    label = 'matched'
+                if label == 1:
+                    label = 'not matched'
+                imshow(torchvision.utils.make_grid(concatenated),
+                       'Dissimilarity: {:.2f} Label: {}'.format(score, label), should_save=True, pth=img_pth)
 
         if args.batch_size == 1:
             with torch.no_grad():
