@@ -222,6 +222,7 @@ class SiameseNetwork(nn.Module):
             x = self.head.layer2(x)
             x = self.head.layer3(x)
             x = self.head.layer4(x)
+            print(x.size)
             x = F.adaptive_avg_pool2d(x, (1, 1))
             x = self.flatten(x)
             output = self.fc1(x)
@@ -428,6 +429,7 @@ def main():
                 loss.backward()
                 optimizer.step()
                 loss_history.append(loss)
+                break
 
                 if (i+1) % 200 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
@@ -446,6 +448,7 @@ def main():
                     label = label_cp.to(args.device)
                     output = net(q_img, r_img)
                     val_loss += criterion(output, label)
+                    break
                 val_loss /= 2000
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
