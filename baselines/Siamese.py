@@ -315,8 +315,8 @@ def main():
     aa('--GeM_p', default=7.0, type=float, help="Power used for GeM pooling")
     aa('--scales', default="1.0", help="scale levels")
     aa('--imsize', default=512, type=int, help="max image size at extraction time")
-    aa('--lr', default=0.0001, type=int, help="learning rate")
-    aa('--weight_decay', default=0.0005, type=int, help="max image size at extraction time")
+    aa('--lr', default=0.0001, type=float, help="learning rate")
+    aa('--weight_decay', default=0.0005, type=float, help="max image size at extraction time")
 
     group = parser.add_argument_group('dataset options')
     aa('--query_list', required=True, help="file with  query image filenames")
