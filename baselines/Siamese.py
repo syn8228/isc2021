@@ -483,7 +483,7 @@ def main():
         test_list = generate_validation_dataset(query_list, gt_list, train_list, 20)
         test_data = TrainList(test_list, transform=transforms, imsize=args.imsize)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
-                                 batch_size=args.batch_size)
+                                 batch_size=1)
         with torch.no_grad():
             for i, data in enumerate(test_loader, 0):
                 img_name = 'test_{}.jpg'.format(i)
@@ -496,10 +496,9 @@ def main():
                 q_img = q_img_cp.to(args.device)
                 r_img = r_img_cp.to(args.device)
                 score = net(q_img, r_img)
-                print(label)
-                if label == torch.FloatTensor([[0]]):
+                if label == 0:
                     label = 'matched'
-                if label == torch.FloatTensor([[1]]):
+                if label == 1:
                     label = 'not matched'
                 imshow(torchvision.utils.make_grid(concatenated),
                        'Dissimilarity: {:.2f} Label: {}'.format(score, label), should_save=True, pth=img_pth)
