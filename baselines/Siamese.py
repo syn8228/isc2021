@@ -222,7 +222,7 @@ class SiameseNetwork(nn.Module):
             x = self.head.layer2(x)
             x = self.head.layer3(x)
             x = self.head.layer4(x)
-            print(x.size)
+            print(x.size())
             x = F.adaptive_avg_pool2d(x, (1, 1))
             x = self.flatten(x)
             output = self.fc1(x)
@@ -434,9 +434,9 @@ def main():
                 if (i+1) % 200 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
-                    val_loss = 0.0
-                    print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
 
+                    print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
+            val_loss = 0.0
             with torch.no_grad():
                 for j, data in enumerate(val_dataloader, 0):
                     q_img, r_img, label = data
