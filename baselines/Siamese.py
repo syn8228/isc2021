@@ -23,6 +23,7 @@ import faiss
 import random
 import tempfile
 import numpy as np
+import matplotlib.pyplot as plt
 import h5py
 import copy
 from efficientnet_pytorch import EfficientNet
@@ -111,6 +112,17 @@ def load_model(name, checkpoint_file):
         return model
 
     assert False
+
+def imshow(img, text=None, should_save=False, pth=None):
+    np_img = img.numpy()
+    plt.axis("off")
+    if text:
+        plt.text(75, 8, text, style='italic',fontweight='bold',
+            bbox={'facecolor':'white', 'alpha':0.8, 'pad':10})
+    plt.imshow(np.transpose(np_img, (1, 2, 0)))
+    if should_save:
+        plt.savefig(pth)
+    plt.show()
 
 
 def gem_npy(x, p=3, eps=1e-6):
@@ -313,7 +325,8 @@ def main():
     group = parser.add_argument_group('output options')
     aa('--query_f', default="isc2021/data/query_siamese.hdf5", help="write query features to this file")
     aa('--db_f', default="isc2021/data/db_siamese.hdf5", help="write query features to this file")
-    aa('--net', default="isc2021/checkpoints/Siamese/", help="save network parameters to this file")
+    aa('--net', default="isc2021/checkpoints/Siamese/", help="save network parameters to this folder")
+    aa('--images', default="isc2021/data/images/", help="save visualized test result to this folder")
 
     args = parser.parse_args()
     args.scales = [float(x) for x in args.scales.split(",")]
@@ -450,6 +463,34 @@ def main():
         for file in pth_files:
             os.remove(file)
         print("best model is: {} with validation loss {}\n".format(best_model_name, epoch_losses[best_epoch]))
+
+        print("test model")
+        state_dict = torch.load(args.net + best_model_name)
+        net.load_state_dict(state_dict)
+        test_list = generate_validation_dataset(query_list, gt_list, train_list, 20)
+        test_data = TrainList(test_list, transform=transforms, imsize=args.imsize)
+        test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
+                                      batch_size=args.batch_size)
+
+        for i, data in enumerate(test_loader,0):
+            img_name = 'test_{}.jpg'.format(i)
+            img_pth = args.images + img_name
+            q_img, r_img, label = data
+            concatenated = torch.cat((q_img, r_img), 0)
+            q_img_cp = copy.deepcopy(q_img)
+            r_img_cp = copy.deepcopy(r_img)
+            label_cp = copy.deepcopy(label)
+            q_img = q_img_cp.to(args.device)
+            r_img = r_img_cp.to(args.device)
+            label = label_cp.to(args.device)
+            score = net(q_img, r_img)
+            if label == 0:
+                label = 'matched'
+            if label == 1:
+                label = 'not matched'
+            imshow(torchvision.utils.make_grid(concatenated),
+                   'Dissimilarity: {:.2f} Label: {}'.format(score, label), should_save=True, pth=img_pth)
+
 
     else:
         print("computing features")
