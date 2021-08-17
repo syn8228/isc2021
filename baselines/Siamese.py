@@ -196,8 +196,8 @@ class SiameseNetwork(nn.Module):
             self.map = False
         self.flatten = nn.Flatten()
         self.fc1 = nn.Sequential(
-            # nn.Linear(2048, 1024),
-            nn.Linear(2048 * 16 * 16, 1024),
+            nn.Linear(2048, 1024),
+            # nn.Linear(2048 * 16 * 16, 1024),
             nn.ReLU(),
             nn.Linear(1024, 512),
             nn.ReLU(),
@@ -223,7 +223,7 @@ class SiameseNetwork(nn.Module):
             x = self.head.layer2(x)
             x = self.head.layer3(x)
             x = self.head.layer4(x)
-            # x = F.adaptive_avg_pool2d(x, (1, 1))
+            x = F.adaptive_avg_pool2d(x, (1, 1))
             x = self.flatten(x)
             output = self.fc1(x)
         else:
