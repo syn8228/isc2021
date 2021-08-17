@@ -496,6 +496,7 @@ def main():
                 q_img = q_img_cp.to(args.device)
                 r_img = r_img_cp.to(args.device)
                 score = net(q_img, r_img)
+                print(label)
                 if label == torch.FloatTensor([[0]]):
                     label = 'matched'
                 if label == torch.FloatTensor([[1]]):
