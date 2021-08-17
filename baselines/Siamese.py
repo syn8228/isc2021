@@ -492,10 +492,9 @@ def main():
                 concatenated = torch.cat((q_img, r_img), 0)
                 q_img_cp = copy.deepcopy(q_img)
                 r_img_cp = copy.deepcopy(r_img)
-                label_cp = copy.deepcopy(label)
                 q_img = q_img_cp.to(args.device)
                 r_img = r_img_cp.to(args.device)
-                score = net(q_img, r_img)
+                score = net(q_img, r_img).cpu()
                 if label == 0:
                     label = 'matched'
                 if label == 1:
