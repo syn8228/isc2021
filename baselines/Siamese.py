@@ -497,9 +497,9 @@ def main():
                 r_img = r_img_cp.to(args.device)
                 label = label_cp.to(args.device)
                 score = net(q_img, r_img)
-                if label == 0:
+                if label == torch.FloatTensor([[0]]):
                     label = 'matched'
-                if label == 1:
+                if label == torch.FloatTensor([[1]]):
                     label = 'not matched'
                 imshow(torchvision.utils.make_grid(concatenated),
                        'Dissimilarity: {:.2f} Label: {}'.format(score, label), should_save=True, pth=img_pth)
