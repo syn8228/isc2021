@@ -465,14 +465,27 @@ def main():
         print("best model is: {} with validation loss {}\n".format(best_model_name, epoch_losses[best_epoch]))
 
         print("test model")
-        state_dict = torch.load(args.net + best_model_name)
+
+
+
+    else:
+        print("computing features")
+        query_images, db_images = generate_extraction_dataset(query_list, db_list)
+        query_dataset = ImageList(query_images, transform=transforms)
+        db_dataset = ImageList(db_images, transform=transforms)
+
+        net = SiameseNetwork(args.model)
+        state_dict = torch.load(args.net + args.checkpoint)
         net.load_state_dict(state_dict)
+        net.to(args.device)
+        print("checkpoint {} loaded\n".format(args.checkpoint))
+
         test_list = generate_validation_dataset(query_list, gt_list, train_list, 20)
         test_data = TrainList(test_list, transform=transforms, imsize=args.imsize)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
-                                      batch_size=args.batch_size)
+                                 batch_size=args.batch_size)
 
-        for i, data in enumerate(test_loader,0):
+        for i, data in enumerate(test_loader, 0):
             img_name = 'test_{}.jpg'.format(i)
             img_pth = args.images + img_name
             q_img, r_img, label = data
@@ -491,18 +504,6 @@ def main():
             imshow(torchvision.utils.make_grid(concatenated),
                    'Dissimilarity: {:.2f} Label: {}'.format(score, label), should_save=True, pth=img_pth)
 
-
-    else:
-        print("computing features")
-        query_images, db_images = generate_extraction_dataset(query_list, db_list)
-        query_dataset = ImageList(query_images, transform=transforms)
-        db_dataset = ImageList(db_images, transform=transforms)
-
-        net = SiameseNetwork(args.model)
-        state_dict = torch.load(args.net + args.checkpoint)
-        net.load_state_dict(state_dict)
-        net.to(args.device)
-        print("checkpoint {} loaded\n".format(args.checkpoint))
         if args.batch_size == 1:
             with torch.no_grad():
                 query_feat, db_feat = list(), list()
