@@ -495,7 +495,6 @@ def main():
                 label_cp = copy.deepcopy(label)
                 q_img = q_img_cp.to(args.device)
                 r_img = r_img_cp.to(args.device)
-                label = label_cp.to(args.device)
                 score = net(q_img, r_img)
                 if label == torch.FloatTensor([[0]]):
                     label = 'matched'
