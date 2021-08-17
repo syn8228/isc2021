@@ -207,6 +207,7 @@ class SiameseNetwork(nn.Module):
 
         self.fc2 = nn.Sequential(
             nn.Linear(1000, 512),
+            nn.Dropout2d(p=0.5),
             nn.ReLU(inplace=True),
 
             nn.Linear(512, 256)
@@ -246,7 +247,7 @@ class ContrastiveLoss(torch.nn.Module):
 
     def forward(self, score, label):
         loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) +
-                          label * 0.5 * torch.pow(torch.clamp(10.0 - score, min=0.0), 2))
+                          label * 0.5 * torch.pow(torch.clamp(15.0 - score, min=0.0), 2))
         return loss
 
 
@@ -314,6 +315,8 @@ def main():
     aa('--GeM_p', default=7.0, type=float, help="Power used for GeM pooling")
     aa('--scales', default="1.0", help="scale levels")
     aa('--imsize', default=512, type=int, help="max image size at extraction time")
+    aa('--lr', default=0.0001, type=int, help="learning rate")
+    aa('--weight_decay', default=0.0005, type=int, help="max image size at extraction time")
 
     group = parser.add_argument_group('dataset options')
     aa('--query_list', required=True, help="file with  query image filenames")
@@ -407,7 +410,8 @@ def main():
         net.to(args.device)
         criterion = ContrastiveLoss()
         criterion.to(args.device)
-        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=0.00001, weight_decay=0.0)
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()),
+                                     lr=args.lr, weight_decay=args.weight_decay)
         loss_history = list()
         epoch_losses = list()
         for epoch in range(args.epoch):
