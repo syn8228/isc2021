@@ -198,15 +198,17 @@ class SiameseNetwork(nn.Module):
         self.fc1 = nn.Sequential(
             nn.Linear(2048, 1024),
             # nn.Linear(2048 * 16 * 16, 1024),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
+            nn.Dropout2d(p=0.2),
             nn.Linear(1024, 512),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Linear(512, 256)
         )
 
         self.fc2 = nn.Sequential(
             nn.Linear(1000, 512),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
+
             nn.Linear(512, 256)
         )
 
