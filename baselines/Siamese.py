@@ -500,7 +500,7 @@ def main():
                 if label == 1:
                     label = 'not matched'
                 imshow(torchvision.utils.make_grid(concatenated),
-                       'Dissimilarity: {:.2f} Label: {}'.format(score, label), should_save=True, pth=img_pth)
+                       'Dissimilarity: {:.2f} Label: {}'.format(score.item(), label), should_save=True, pth=img_pth)
 
         if args.batch_size == 1:
             with torch.no_grad():
