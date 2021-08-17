@@ -196,7 +196,8 @@ class SiameseNetwork(nn.Module):
             self.map = False
         self.flatten = nn.Flatten()
         self.fc1 = nn.Sequential(
-            nn.Linear(2048, 1024),
+            # nn.Linear(2048, 1024),
+            nn.Linear(2048 * 16 * 16, 1024),
             nn.ReLU(),
             nn.Linear(1024, 512),
             nn.ReLU(),
@@ -222,8 +223,7 @@ class SiameseNetwork(nn.Module):
             x = self.head.layer2(x)
             x = self.head.layer3(x)
             x = self.head.layer4(x)
-            print(x.size())
-            x = F.adaptive_avg_pool2d(x, (1, 1))
+            # x = F.adaptive_avg_pool2d(x, (1, 1))
             x = self.flatten(x)
             output = self.fc1(x)
         else:
@@ -429,7 +429,6 @@ def main():
                 loss.backward()
                 optimizer.step()
                 loss_history.append(loss)
-                break
 
                 if (i+1) % 200 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
@@ -448,7 +447,6 @@ def main():
                     label = label_cp.to(args.device)
                     output = net(q_img, r_img)
                     val_loss += criterion(output, label)
-                    break
                 val_loss /= 2000
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
@@ -467,10 +465,6 @@ def main():
             os.remove(file)
         print("best model is: {} with validation loss {}\n".format(best_model_name, epoch_losses[best_epoch]))
 
-        print("test model")
-
-
-
     else:
         print("computing features")
         query_images, db_images = generate_extraction_dataset(query_list, db_list)
@@ -482,7 +476,7 @@ def main():
         net.load_state_dict(state_dict)
         net.to(args.device)
         print("checkpoint {} loaded\n".format(args.checkpoint))
-
+        print("test model\n")
         test_list = generate_validation_dataset(query_list, gt_list, train_list, 20)
         test_data = TrainList(test_list, transform=transforms, imsize=args.imsize)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
