@@ -166,28 +166,6 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
     return v_list
 
 
-def generate_test_dataset(query_list, gt_list, train_list, len_data):
-    # random.seed(1)
-    t_list = list()
-    gt_list = gt_list[0: int(len(gt_list)*3/4)]
-    for i in range(len_data):
-        label = random.randint(0, 1)
-        if label == 0:
-            gt = random.sample(gt_list, 1)[0]
-            q = gt.query
-            r = gt.db
-            q = QUERY + q + ".jpg"
-            r = REFERENCE + r + ".jpg"
-            t_list.append((q, r, label))
-        else:
-            q = random.sample(query_list, 1)[0]
-            r = random.sample(train_list, 1)[0]
-            q = QUERY + q + ".jpg"
-            t = TRAIN + r + ".jpg"
-            t_list.append((q, t, label))
-    return t_list
-
-
 def generate_extraction_dataset(query_list, db_list, train_list):
     query_images = [QUERY + q + ".jpg" for q in query_list]
     db_images = [REFERENCE + r + ".jpg" for r in db_list]
@@ -497,7 +475,7 @@ def main():
         net.to(args.device)
         print("checkpoint {} loaded\n".format(args.checkpoint))
         print("test model\n")
-        test_list = generate_test_dataset(query_list, gt_list, train_list, 20)
+        test_list = generate_validation_dataset(query_list, gt_list, train_list, 20)
         test_data = TrainList(test_list, transform=transforms, imsize=args.imsize)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
                                  batch_size=1)
@@ -505,7 +483,13 @@ def main():
             for i, data in enumerate(test_loader, 0):
                 img_name = 'test_{}.jpg'.format(i)
                 img_pth = args.images + img_name
-                q_img, r_img, label = data
+                q_img, rp_img, rn_img = data
+                if i < 10:
+                    r_img = rp_img
+                    label = 0
+                else:
+                    r_img = rn_img
+                    label = 1
                 concatenated = torch.cat((q_img, r_img), 0)
                 q_img_cp = copy.deepcopy(q_img)
                 r_img_cp = copy.deepcopy(r_img)
