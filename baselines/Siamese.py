@@ -247,7 +247,7 @@ class ContrastiveLoss(torch.nn.Module):
 
     def forward(self, score, label):
         loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) +
-                          label * 0.5 * torch.pow(torch.clamp(15.0 - score, min=0.0), 2))
+                          label * 0.5 * torch.pow(torch.clamp(10.0 - score, min=0.0), 2))
         return loss
 
 
