@@ -166,6 +166,28 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
     return v_list
 
 
+def generate_test_dataset(query_list, gt_list, train_list, len_data):
+    # random.seed(1)
+    t_list = list()
+    gt_list = gt_list[0: int(len(gt_list)*3/4)]
+    for i in range(len_data):
+        label = random.randint(0, 1)
+        if label == 0:
+            gt = random.sample(gt_list, 1)[0]
+            q = gt.query
+            r = gt.db
+            q = QUERY + q + ".jpg"
+            r = REFERENCE + r + ".jpg"
+            t_list.append((q, r, label))
+        else:
+            q = random.sample(query_list, 1)[0]
+            r = random.sample(train_list, 1)[0]
+            q = QUERY + q + ".jpg"
+            t = TRAIN + r + ".jpg"
+            t_list.append((q, t, label))
+    return t_list
+
+
 def generate_extraction_dataset(query_list, db_list, train_list):
     query_images = [QUERY + q + ".jpg" for q in query_list]
     db_images = [REFERENCE + r + ".jpg" for r in db_list]
@@ -333,7 +355,7 @@ def main():
     aa('--db_f', default="isc2021/data/db_siamese.hdf5", help="write query features to this file")
     aa('--train_f', default="isc2021/data/train_siamese.hdf5", help="write training features to this file")
     aa('--net', default="isc2021/checkpoints/Siamese/", help="save network parameters to this folder")
-    aa('--images', default="isc2021/data/images/", help="save visualized test result to this folder")
+    aa('--images', default="isc2021/data/images/triplet/", help="save visualized test result to this folder")
 
     args = parser.parse_args()
     args.scales = [float(x) for x in args.scales.split(",")]
@@ -475,7 +497,7 @@ def main():
         net.to(args.device)
         print("checkpoint {} loaded\n".format(args.checkpoint))
         print("test model\n")
-        test_list = generate_validation_dataset(query_list, gt_list, train_list, 20)
+        test_list = generate_test_dataset(query_list, gt_list, train_list, 20)
         test_data = TrainList(test_list, transform=transforms, imsize=args.imsize)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
                                  batch_size=1)
@@ -489,7 +511,7 @@ def main():
                 r_img_cp = copy.deepcopy(r_img)
                 q_img = q_img_cp.to(args.device)
                 r_img = r_img_cp.to(args.device)
-                score = net(q_img, r_img).cpu()
+                score = net.calculate_distance(q_img, r_img).cpu()
                 if label == 0:
                     label = 'matched'
                     print('matched with distance: {:.4f}\n'.format(score.item()))

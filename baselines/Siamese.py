@@ -334,7 +334,7 @@ def main():
     aa('--db_f', default="isc2021/data/db_siamese.hdf5", help="write query features to this file")
     aa('--train_f', default="isc2021/data/train_siamese.hdf5", help="write training features to this file")
     aa('--net', default="isc2021/checkpoints/Siamese/", help="save network parameters to this folder")
-    aa('--images', default="isc2021/data/images/", help="save visualized test result to this folder")
+    aa('--images', default="isc2021/data/images/siamese/", help="save visualized test result to this folder")
 
     args = parser.parse_args()
     args.scales = [float(x) for x in args.scales.split(",")]
