@@ -311,7 +311,7 @@ def main():
 
     group = parser.add_argument_group('model options')
     aa('--model', default='multigrain_resnet50', help="model to use")
-    aa('--checkpoint', default='Siamese_Epoch_4.pth', help='best saved model name')
+    aa('--checkpoint', default='Triplet_Epoch_4.pth', help='best saved model name')
     aa('--GeM_p', default=7.0, type=float, help="Power used for GeM pooling")
     aa('--scales', default="1.0", help="scale levels")
     aa('--imsize', default=512, type=int, help="max image size at extraction time")
@@ -329,10 +329,10 @@ def main():
     aa('--i1', default=-1, type=int, help="last image to process + 1")
 
     group = parser.add_argument_group('output options')
-    aa('--query_f', default="isc2021/data/query_siamese.hdf5", help="write query features to this file")
-    aa('--db_f', default="isc2021/data/db_siamese.hdf5", help="write query features to this file")
-    aa('--train_f', default="isc2021/data/train_siamese.hdf5", help="write training features to this file")
-    aa('--net', default="isc2021/checkpoints/Siamese/", help="save network parameters to this folder")
+    aa('--query_f', default="isc2021/data/query_triplet.hdf5", help="write query features to this file")
+    aa('--db_f', default="isc2021/data/db_triplet.hdf5", help="write query features to this file")
+    aa('--train_f', default="isc2021/data/train_triplet.hdf5", help="write training features to this file")
+    aa('--net', default="isc2021/checkpoints/triplet/", help="save network parameters to this folder")
     aa('--images', default="isc2021/data/images/triplet/", help="save visualized test result to this folder")
 
     args = parser.parse_args()
@@ -448,14 +448,14 @@ def main():
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
 
-            trained_model_name = 'Siamese_Epoch_{}.pth'.format(epoch)
+            trained_model_name = 'Triplet_Epoch_{}.pth'.format(epoch)
             model_full_path = args.net + trained_model_name
             torch.save(net.state_dict(), model_full_path)
             print('model saved as: {}\n'.format(trained_model_name))
 
         epoch_losses = np.asarray(epoch_losses)
         best_epoch = np.argmin(epoch_losses)
-        best_model_name = 'Siamese_Epoch_{}.pth'.format(best_epoch)
+        best_model_name = 'Triplet_Epoch_{}.pth'.format(best_epoch)
         pth_files = glob.glob(args.net + '*.pth')
         pth_files.remove(args.net + best_model_name)
         for file in pth_files:
