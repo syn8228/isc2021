@@ -138,20 +138,14 @@ def generate_train_dataset(query_list, gt_list, train_list, len_data):
     t_list = list()
     gt_list = gt_list[0: int(len(gt_list)*3/4)]
     for i in range(len_data):
-        label = random.randint(0, 1)
-        if label == 0:
-            gt = random.sample(gt_list, 1)[0]
-            q = gt.query
-            r = gt.db
-            q = QUERY + q + ".jpg"
-            r = REFERENCE + r + ".jpg"
-            t_list.append((q, r, label))
-        else:
-            q = random.sample(query_list, 1)[0]
-            r = random.sample(train_list, 1)[0]
-            q = QUERY + q + ".jpg"
-            t = TRAIN + r + ".jpg"
-            t_list.append((q, t, label))
+        gt = random.sample(gt_list, 1)[0]
+        q = gt.query
+        r_positive = gt.db
+        r_negative = random.sample(train_list, 1)[0]
+        q = QUERY + q + ".jpg"
+        r_positive = REFERENCE + r_positive + ".jpg"
+        r_negative = TRAIN + r_negative + ".jpg"
+        t_list.append((q, r_positive, r_negative))
     return t_list
 
 
@@ -161,20 +155,14 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
     v_list = list()
     gt_list = gt_list[int(len(gt_list)*3/4): -1]
     for i in range(len_data):
-        label = random.randint(0, 1)
-        if label == 0:
-            gt = random.sample(gt_list, 1)[0]
-            q = gt.query
-            r = gt.db
-            q = QUERY + q + ".jpg"
-            r = REFERENCE + r + ".jpg"
-            v_list.append((q, r, label))
-        else:
-            q = random.sample(query_list, 1)[0]
-            r = random.sample(train_list, 1)[0]
-            q = QUERY + q + ".jpg"
-            t = TRAIN + r + ".jpg"
-            v_list.append((q, t, label))
+        gt = random.sample(gt_list, 1)[0]
+        q = gt.query
+        r_positive = gt.db
+        r_negative = random.sample(train_list, 1)[0]
+        q = QUERY + q + ".jpg"
+        r_positive = REFERENCE + r_positive + ".jpg"
+        r_negative = TRAIN + r_negative + ".jpg"
+        v_list.append((q, r_positive, r_negative))
     return v_list
 
 
@@ -208,6 +196,7 @@ class SiameseNetwork(nn.Module):
 
         self.fc2 = nn.Sequential(
             nn.Linear(1000, 512),
+            # nn.Dropout2d(p=0.5),
             nn.ReLU(inplace=True),
 
             nn.Linear(512, 256)
@@ -234,20 +223,27 @@ class SiameseNetwork(nn.Module):
             output = self.fc2(x)
         return output
 
-    def forward(self, input1, input2):
+    def calculate_distance(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
         score = self.score(output1, output2)
         return score
 
+    def forward(self, input1, input2, input3):
+        output1 = self.forward_once(input1)
+        output2 = self.forward_once(input2)
+        output3 = self.forward_once(input3)
+        score_positive = self.score(output1, output2)
+        score_negative = self.score(output1, output3)
+        return score_positive, score_negative
 
-class ContrastiveLoss(torch.nn.Module):
+
+class TripletLoss(torch.nn.Module):
     def __int__(self):
-        super(ContrastiveLoss, self).__init__()
+        super(TripletLoss, self).__init__()
 
-    def forward(self, score, label):
-        loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) +
-                          label * 0.5 * torch.pow(torch.clamp(15.0 - score, min=0.0), 2))
+    def forward(self, score_positive, score_negative):
+        loss = torch.clamp(torch.pow(score_positive, 2) - torch.pow(score_negative, 2) + 10, min=0.0)
         return loss
 
 
@@ -282,15 +278,18 @@ class TrainList(Dataset):
         return len(self.image_list)
 
     def __getitem__(self, i):
-        q, r, label = self.image_list[i]
+        q, r_p, r_n = self.image_list[i]
         query_image = Image.open(q)
-        db_image = Image.open(r)
+        db_positive = Image.open(r_p)
+        db_negative = Image.open(r_n)
         query_image = query_image.convert("RGB")
-        db_image = db_image.convert("RGB")
+        db_positive = db_positive.convert("RGB")
+        db_negative = db_negative.convert("RGB")
         if self.transform is not None:
             query_image = self.transform(query_image)
-            db_image = self.transform(db_image)
-        return query_image, db_image, label
+            db_positive = self.transform(db_positive)
+            db_negative = self.transform(db_negative)
+        return query_image, db_positive, db_negative
 
 
 def main():
@@ -386,19 +385,21 @@ def main():
     if args.train:
         print("training network")
         # t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
-        v_list = generate_validation_dataset(query_list, gt_list, train_list, 2000)
         # print(f"subsampled {args.len} vectors")
         #
         # im_pairs = TrainList(t_list, transform=transforms, imsize=args.imsize)
-        val_pairs = TrainList(v_list, transform=transforms, imsize=args.imsize)
         # train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
         #                               batch_size=args.batch_size)
+        v_list = generate_validation_dataset(query_list, gt_list, train_list, 2000)
+
+        val_pairs = TrainList(v_list, transform=transforms, imsize=args.imsize)
+
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork(args.model)
         net.to(args.device)
-        criterion = ContrastiveLoss()
+        criterion = TripletLoss()
         criterion.to(args.device)
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()),
                                      lr=args.lr, weight_decay=args.weight_decay)
@@ -412,16 +413,16 @@ def main():
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
             for i, data in enumerate(train_dataloader, 0):
-                q_img, r_img, label = data
+                q_img, rp_img, rn_img = data
                 q_img_cp = copy.deepcopy(q_img)
-                r_img_cp = copy.deepcopy(r_img)
-                label_cp = copy.deepcopy(label)
+                rp_img_cp = copy.deepcopy(rp_img)
+                rn_img_cp = copy.deepcopy(rn_img)
                 q_img = q_img_cp.to(args.device)
-                r_img = r_img_cp.to(args.device)
-                label = label_cp.to(args.device)
-                output = net(q_img, r_img)
+                rp_img = rp_img_cp.to(args.device)
+                rn_img = rn_img_cp.to(args.device)
+                score_p, score_n = net(q_img, rp_img, rn_img)
                 optimizer.zero_grad()
-                loss = criterion(output, label)
+                loss = criterion(score_p, score_n)
                 loss.backward()
                 optimizer.step()
                 loss_history.append(loss)
@@ -434,15 +435,15 @@ def main():
             val_loss = 0.0
             with torch.no_grad():
                 for j, data in enumerate(val_dataloader, 0):
-                    q_img, r_img, label = data
+                    q_img, rp_img, rn_img = data
                     q_img_cp = copy.deepcopy(q_img)
-                    r_img_cp = copy.deepcopy(r_img)
-                    label_cp = copy.deepcopy(label)
+                    rp_img_cp = copy.deepcopy(rp_img)
+                    rn_img_cp = copy.deepcopy(rn_img)
                     q_img = q_img_cp.to(args.device)
-                    r_img = r_img_cp.to(args.device)
-                    label = label_cp.to(args.device)
-                    output = net(q_img, r_img)
-                    val_loss += criterion(output, label)
+                    rp_img = rp_img_cp.to(args.device)
+                    rn_img = rn_img_cp.to(args.device)
+                    score_p, score_n = net(q_img, rp_img, rn_img)
+                    val_loss += criterion(score_p, score_n)
                 val_loss /= 2000
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
