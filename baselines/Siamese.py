@@ -445,7 +445,7 @@ def main():
         epoch_losses = list()
         epoch_size = int(len(train_images)/args.epoch)
         for epoch in range(args.epoch):
-            train_subset = train_images[i * epoch_size: (i+1)*epoch_size - 1]
+            train_subset = train_images[epoch * epoch_size: (epoch+1)*epoch_size - 1]
             train_subset_1 = train_images[0 : int(len(train_subset)/2)]
             train_subset_2 = train_images[int(len(train_subset) / 2): -1]
             im_pairs = ConcatDataset([
