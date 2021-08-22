@@ -9,13 +9,14 @@ sys.path.append('/cluster/yinan/isc2021')
 
 from PIL import Image
 from isc.io import write_hdf5_descriptors, read_ground_truth, read_predictions, write_predictions, read_descriptors
+from utils.argumentation import *
 
 import torch
 import torchvision
 import torchvision.transforms
 from torch import nn
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
 import os
 import glob
@@ -31,6 +32,7 @@ from pytorch_pretrained_vit import ViT
 import timm
 from pprint import pprint
 import pandas as pd
+from torchvision.transforms import Compose
 
 QUERY = '/cluster/shared_dataset/isc2021/query_images/'
 REFERENCE = '/cluster/shared_dataset/isc2021/reference_images/'
@@ -270,7 +272,7 @@ class ImageList(Dataset):
         return x
 
 
-class TrainList(Dataset):
+class ValList(Dataset):
 
     def __init__(self, image_list, imsize=None, transform=None):
         Dataset.__init__(self)
@@ -290,6 +292,29 @@ class TrainList(Dataset):
         if self.transform is not None:
             query_image = self.transform(query_image)
             db_image = self.transform(db_image)
+        return query_image, db_image, label
+
+
+class TrainList(Dataset):
+
+    def __init__(self, image_list, imsize=None, transform=None, argumentation=None):
+        Dataset.__init__(self)
+        self.image_list = image_list
+        self.transform = transform
+        self.imsize = imsize
+        self.argumentation = argumentation
+
+    def __len__(self):
+        return len(self.image_list)
+
+    def __getitem__(self, i):
+        label = random.randint(0, 1)
+        if label == 0:
+            query_image = Image.open(self.image_list[i])
+            db_image = self.argumentation(query_image)
+        else:
+            query_image = Image.open(self.image_list[i])
+            db_image = Image.open(random.sample(self.image_list, 1)[0])
         return query_image, db_image, label
 
 
@@ -358,9 +383,11 @@ def main():
     query_list = [l.strip() for l in open(args.query_list, "r")]
     db_list = [l.strip() for l in open(args.db_list, "r")]
     train_list = [l.strip() for l in open(args.train_list, "r")]
+    query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
     if args.i1 != -1 or args.i0 != 0:
         db_list = db_list[args.i0:args.i1]
         train_list = train_list[args.i0:args.i1]
+
 
     # transform
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
@@ -384,15 +411,27 @@ def main():
     transforms = torchvision.transforms.Compose(transforms)
 
     if args.train:
+        argu_list_1 = Compose([
+            VerticalFlip(),
+            Rotate(),
+            ColRec(),
+            GaussianNoise(),
+            GaussianBlur(),
+            ZoomIn(),
+        ])
+
+        argu_list_2 = Compose([
+            VerticalFlip(),
+            Rotate(),
+            ColRec(),
+            GaussianNoise(),
+            GaussianBlur(),
+            ZoomOut(),
+        ])
+
         print("training network")
-        # t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
         v_list = generate_validation_dataset(query_list, gt_list, train_list, 2000)
-        # print(f"subsampled {args.len} vectors")
-        #
-        # im_pairs = TrainList(t_list, transform=transforms, imsize=args.imsize)
-        val_pairs = TrainList(v_list, transform=transforms, imsize=args.imsize)
-        # train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
-        #                               batch_size=args.batch_size)
+        val_pairs = ValList(v_list, transform=transforms, imsize=args.imsize)
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
         print("loading model")
@@ -404,11 +443,15 @@ def main():
                                      lr=args.lr, weight_decay=args.weight_decay)
         loss_history = list()
         epoch_losses = list()
+        epoch_size = int(len(train_images)/args.epoch)
         for epoch in range(args.epoch):
-            t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
-            print(f"subsampled {args.len} vectors")
-
-            im_pairs = TrainList(t_list, transform=transforms, imsize=args.imsize)
+            train_subset = train_images[i * epoch_size: (i+1)*epoch_size - 1]
+            train_subset_1 = train_images[0 : int(len(train_subset)/2)]
+            train_subset_2 = train_images[int(len(train_subset) / 2): -1]
+            im_pairs = ConcatDataset([
+                TrainList(train_subset_1, transform=transforms, imsize=args.imsize, argumentation=argu_list_1),
+                TrainList(train_subset_2, transform=transforms, imsize=args.imsize, argumentation=argu_list_2)
+            ])
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
             for i, data in enumerate(train_dataloader, 0):
@@ -426,7 +469,7 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if (i+1) % 200 == 0:
+                if (i+1) % 2000 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
 
@@ -463,7 +506,6 @@ def main():
 
     else:
         print("computing features")
-        query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
         query_dataset = ImageList(query_images, transform=transforms)
         db_dataset = ImageList(db_images, transform=transforms)
         train_dataset = ImageList(train_images, transform=transforms)
