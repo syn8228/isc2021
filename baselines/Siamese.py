@@ -418,6 +418,7 @@ def main():
             GaussianNoise(),
             GaussianBlur(),
             ZoomIn(),
+            torchvision.transforms.ToTensor()
         ])
 
         argu_list_2 = Compose([
@@ -427,6 +428,7 @@ def main():
             GaussianNoise(),
             GaussianBlur(),
             ZoomOut(),
+            torchvision.transforms.ToTensor()
         ])
 
         print("training network")
