@@ -2,7 +2,6 @@ import math
 import numbers
 import random
 import numpy as np
-import matplotlib as plt
 
 from PIL import Image, ImageOps, ImageFilter
 
