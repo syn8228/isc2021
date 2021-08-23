@@ -392,10 +392,12 @@ def main():
     query_list = [l.strip() for l in open(args.query_list, "r")]
     db_list = [l.strip() for l in open(args.db_list, "r")]
     train_list = [l.strip() for l in open(args.train_list, "r")]
-    query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
+
     if args.i1 != -1 or args.i0 != 0:
         db_list = db_list[args.i0:args.i1]
         train_list = train_list[args.i0:args.i1]
+
+    query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
 
 
     # transform
@@ -480,7 +482,7 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if (i+1) % 2000 == 0:
+                if (i+1) % 100 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
 
