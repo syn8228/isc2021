@@ -160,7 +160,7 @@ def generate_train_dataset(query_list, gt_list, train_list, len_data):
 def generate_validation_dataset(query_list, gt_list, train_list, len_data):
     # TODO: generate training list with length len_data
     # random.seed(3)
-    v_list = list()
+    v_list = []
     gt_list = gt_list[int(len(gt_list)*3/4): -1]
     for i in range(len_data):
         label = random.randint(0, 1)
