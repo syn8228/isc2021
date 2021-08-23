@@ -19,7 +19,7 @@ python3	isc2021/baselines/Siamese.py
 Options:
 --transpose: insert one of the 7 PIL transpose, default:-1
 --train: train network or use network for feature extraction
---device: pytorch device, default:¡±cuda:0¡±
+--device: pytorch device, default:cuda:0
 --batch_size: Dataloader batch size
 --num_workers: number of Dataloader workers
 
