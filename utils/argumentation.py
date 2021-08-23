@@ -146,15 +146,15 @@ class NegativeImage(object):
         return image
 
 
-img = np.ones((100, 203, 3))
-img_pil = Image.fromarray(np.uint8(img))
-list = [
-    NegativeImage(1.0),
-    RandomCut(1.0),
-    ZoomIn(1.0),
-]
-random.shuffle(list)
-print(list)
-trans = transforms.Compose(list)
-img = trans(img_pil)
-print(img.size)
+# img = np.ones((100, 203, 3))
+# img_pil = Image.fromarray(np.uint8(img))
+# list = [
+#     NegativeImage(1.0),
+#     RandomCut(1.0),
+#     ZoomIn(1.0),
+# ]
+# random.shuffle(list)
+# print(list)
+# trans = transforms.Compose(list)
+# img = trans(img_pil)
+# print(img.size)
