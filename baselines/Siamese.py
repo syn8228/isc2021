@@ -522,7 +522,7 @@ def main():
         print("checkpoint {} loaded\n".format(args.checkpoint))
         print("test model\n")
         test_list = generate_validation_dataset(query_list, gt_list, train_list, 20)
-        test_data = TrainList(test_list, transform=transforms, imsize=args.imsize)
+        test_data = ValList(test_list, transform=transforms, imsize=args.imsize)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
                                  batch_size=1)
         with torch.no_grad():
