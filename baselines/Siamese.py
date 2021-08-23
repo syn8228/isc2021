@@ -453,7 +453,7 @@ def main():
         epoch_losses = list()
         epoch_size = int(len(train_images)/args.epoch)
         for epoch in range(args.epoch):
-            random.shuffle(argu_list)
+            #random.shuffle(argu_list)
             argu_list = Compose(argu_list)
             train_subset = train_images[epoch * epoch_size: (epoch+1)*epoch_size - 1]
             im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argu_list)
