@@ -355,7 +355,7 @@ def main():
 
     group = parser.add_argument_group('dataset options')
     aa('--query_list', required=True, help="file with  query image filenames")
-    aa('--gt_list', required=True, help="file with reference image filenames")
+    aa('--gt_list', required=True, help="file with ground truth image filenames")
     aa('--train_list', required=True, help="file with training image filenames")
     aa('--db_list', required=True, help="file with training image filenames")
     aa('--len', default=1000, type=int, help="nb of training vectors for the SiameseNetwork")
@@ -454,9 +454,9 @@ def main():
         epoch_size = int(len(train_images)/args.epoch)
         for epoch in range(args.epoch):
             random.shuffle(argu_list)
-            argu_list = Compose(argu_list)
+            argumentations = Compose(argu_list)
             train_subset = train_images[epoch * epoch_size: (epoch+1)*epoch_size - 1]
-            im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argu_list)
+            im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argumentations)
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
             for i, data in enumerate(train_dataloader, 0):
