@@ -2,6 +2,7 @@ import math
 import numbers
 import random
 import numpy as np
+from torchvision import transforms
 
 from PIL import Image, ImageOps, ImageFilter
 
@@ -120,3 +121,40 @@ class ZoomOut(object):
             image = Image.fromarray(np.uint8(image))
             image = image.resize((im_y, im_x))
         return image
+
+
+class RandomCut(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        if random.random() < self.p:
+            transform = transforms.RandomResizedCrop(image.size)
+            image = transform(image)
+        return image
+
+
+class NegativeImage(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        if random.random() < self.p:
+            image = np.array(image)
+            image = np.ones(image.shape)*255 - image
+            image = Image.fromarray(np.uint8(image))
+        return image
+
+
+img = np.ones((100, 203, 3))
+img_pil = Image.fromarray(np.uint8(img))
+list = [
+    NegativeImage(1.0),
+    RandomCut(1.0),
+    ZoomIn(1.0),
+]
+random.shuffle(list)
+print(list)
+trans = transforms.Compose(list)
+img = trans(img_pil)
+print(img.size)

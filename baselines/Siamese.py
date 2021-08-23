@@ -422,25 +422,20 @@ def main():
     transforms = torchvision.transforms.Compose(transforms)
 
     if args.train:
-        argu_list_1 = Compose([
+        argu_list = [
+            RandomCut(),
+            NegativeImage(),
             VerticalFlip(),
             Rotate(),
             ColRec(),
             GaussianNoise(),
             GaussianBlur(),
             ZoomIn(),
-            #torchvision.transforms.ToTensor()
-        ])
+            ZoomOut,
+            RandomCut(),
+            NegativeImage(),
+        ]
 
-        argu_list_2 = Compose([
-            VerticalFlip(),
-            Rotate(),
-            ColRec(),
-            GaussianNoise(),
-            GaussianBlur(),
-            ZoomOut(),
-            #torchvision.transforms.ToTensor()
-        ])
 
         print("training network")
         v_list = generate_validation_dataset(query_list, gt_list, train_list, 2000)
@@ -458,13 +453,10 @@ def main():
         epoch_losses = list()
         epoch_size = int(len(train_images)/args.epoch)
         for epoch in range(args.epoch):
+            random.shuffle(argu_list)
+            argu_list = Compose(argu_list)
             train_subset = train_images[epoch * epoch_size: (epoch+1)*epoch_size - 1]
-            train_subset_1 = train_images[0 : int(len(train_subset)/2)]
-            train_subset_2 = train_images[int(len(train_subset) / 2): -1]
-            im_pairs = ConcatDataset([
-                TrainList(train_subset_1, transform=transforms, imsize=args.imsize, argumentation=argu_list_1),
-                TrainList(train_subset_2, transform=transforms, imsize=args.imsize, argumentation=argu_list_2)
-            ])
+            im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argu_list)
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
             for i, data in enumerate(train_dataloader, 0):
