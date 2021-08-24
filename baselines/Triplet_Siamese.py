@@ -9,13 +9,14 @@ sys.path.append('/cluster/yinan/isc2021')
 
 from PIL import Image
 from isc.io import write_hdf5_descriptors, read_ground_truth, read_predictions, write_predictions, read_descriptors
+from utils.argumentation import *
 
 import torch
 import torchvision
 import torchvision.transforms
 from torch import nn
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
 import os
 import glob
@@ -31,6 +32,7 @@ from pytorch_pretrained_vit import ViT
 import timm
 from pprint import pprint
 import pandas as pd
+from torchvision.transforms import Compose
 
 QUERY = '/cluster/shared_dataset/isc2021/query_images/'
 REFERENCE = '/cluster/shared_dataset/isc2021/reference_images/'
@@ -268,10 +270,36 @@ class ImageList(Dataset):
 
 class TrainList(Dataset):
 
-    def __init__(self, image_list, imsize=None, transform=None):
+    def __init__(self, image_list, imsize=None, transform=None, argumentation=None):
         Dataset.__init__(self)
         self.image_list = image_list
         self.transform = transform
+        self.argumentation = argumentation
+        self.imsize = imsize
+
+    def __len__(self):
+        return len(self.image_list)
+
+    def __getitem__(self, i):
+        query_image = Image.open(self.image_list[i])
+        query_image = query_image.convert("RGB")
+        db_positive = self.argumentation(query_image)
+        db_negative = Image.open(random.sample(self.image_list, 1)[0])
+        db_negative = db_negative.convert("RGB")
+        if self.transform is not None:
+            query_image = self.transform(query_image)
+            db_positive = self.transform(db_positive)
+            db_negative = self.transform(db_negative)
+        return query_image, db_positive, db_negative
+
+
+class ValList(Dataset):
+
+    def __init__(self, image_list, imsize=None, transform=None, argumentation=None):
+        Dataset.__init__(self)
+        self.image_list = image_list
+        self.transform = transform
+        self.argumentation = argumentation
         self.imsize = imsize
 
     def __len__(self):
@@ -289,6 +317,7 @@ class TrainList(Dataset):
             query_image = self.transform(query_image)
             db_positive = self.transform(db_positive)
             db_negative = self.transform(db_negative)
+
         return query_image, db_positive, db_negative
 
 
@@ -361,6 +390,8 @@ def main():
         db_list = db_list[args.i0:args.i1]
         train_list = train_list[args.i0:args.i1]
 
+    query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
+
     # transform
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
@@ -383,6 +414,21 @@ def main():
     transforms = torchvision.transforms.Compose(transforms)
 
     if args.train:
+
+        argu_list = [
+            RandomCut(),
+            NegativeImage(),
+            VerticalFlip(),
+            Rotate(),
+            ColRec(),
+            GaussianNoise(),
+            GaussianBlur(),
+            ZoomIn(),
+            ZoomOut(),
+            RandomCut(),
+            NegativeImage(),
+        ]
+
         print("training network")
         # t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
         # print(f"subsampled {args.len} vectors")
@@ -390,9 +436,9 @@ def main():
         # im_pairs = TrainList(t_list, transform=transforms, imsize=args.imsize)
         # train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
         #                               batch_size=args.batch_size)
-        v_list = generate_validation_dataset(query_list, gt_list, train_list, 2000)
+        v_list = generate_validation_dataset(query_list, gt_list, train_list, args.len)
 
-        val_pairs = TrainList(v_list, transform=transforms, imsize=args.imsize)
+        val_pairs = ValList(v_list, transform=transforms, imsize=args.imsize)
 
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
@@ -405,11 +451,13 @@ def main():
                                      lr=args.lr, weight_decay=args.weight_decay)
         loss_history = list()
         epoch_losses = list()
+        epoch_size = int(len(train_images) / args.epoch)
         for epoch in range(args.epoch):
-            t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
-            print(f"subsampled {args.len} vectors")
+            random.shuffle(argu_list)
+            argumentations = Compose(argu_list)
+            train_subset = train_images[epoch * epoch_size: (epoch + 1) * epoch_size - 1]
 
-            im_pairs = TrainList(t_list, transform=transforms, imsize=args.imsize)
+            im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argumentations)
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
             for i, data in enumerate(train_dataloader, 0):
@@ -444,7 +492,7 @@ def main():
                     rn_img = rn_img_cp.to(args.device)
                     score_p, score_n = net(q_img, rp_img, rn_img)
                     val_loss += criterion(score_p, score_n)
-                val_loss /= 2000
+                val_loss /= args.len
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
 
@@ -464,7 +512,6 @@ def main():
 
     else:
         print("computing features")
-        query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
         query_dataset = ImageList(query_images, transform=transforms)
         db_dataset = ImageList(db_images, transform=transforms)
         train_dataset = ImageList(train_images, transform=transforms)
@@ -476,7 +523,7 @@ def main():
         print("checkpoint {} loaded\n".format(args.checkpoint))
         print("test model\n")
         test_list = generate_validation_dataset(query_list, gt_list, train_list, 20)
-        test_data = TrainList(test_list, transform=transforms, imsize=args.imsize)
+        test_data = ValList(test_list, transform=transforms, imsize=args.imsize)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
                                  batch_size=1)
         with torch.no_grad():
