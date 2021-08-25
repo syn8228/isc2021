@@ -545,7 +545,7 @@ def main():
                     print('matched with distance: {:.4f}\n'.format(score.item()))
                 if label == 1:
                     label = 'not matched'
-                    distance_p.append(score.item())
+                    distance_n.append(score.item())
                     print('not matched with distance: {:.4f}\n'.format(score.item()))
                 imshow(torchvision.utils.make_grid(concatenated),
                        'Dissimilarity: {:.2f} Label: {}'.format(score.item(), label), should_save=True, pth=img_pth)
