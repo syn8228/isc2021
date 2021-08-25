@@ -284,7 +284,7 @@ class TrainList(Dataset):
         background = Image.open(random.sample(self.image_list, 1)[0])
         self.argumentation.append(MergeImage(background, 0.5))
         random.shuffle(self.argumentation)
-        argument = Compose(self.argumentatio)
+        argument = Compose(self.argumentation)
         query_image = Image.open(self.image_list[i])
         query_image = query_image.convert("RGB")
         db_positive = argument(query_image)
