@@ -419,6 +419,7 @@ def main():
             RandomCut(),
             NegativeImage(),
             VerticalFlip(),
+            HorizontalFlip(),
             Rotate(),
             ColRec(),
             GaussianNoise(),

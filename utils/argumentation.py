@@ -19,6 +19,18 @@ class VerticalFlip(object):
         return image
 
 
+class HorizontalFlip(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        image = np.array(image)
+        if random.random() < self.p:
+            image = np.flip(image, 0).copy()
+        image = Image.fromarray(np.uint8(image))
+        return image
+
+
 class GaussianBlur(object):
     def __init__(self, probability=0.5):
         self.p = probability
@@ -152,6 +164,7 @@ class NegativeImage(object):
 #     NegativeImage(1.0),
 #     RandomCut(1.0),
 #     ZoomIn(1.0),
+#     HorizontalFlip(1.0),
 # ]
 # random.shuffle(list)
 # print(list)

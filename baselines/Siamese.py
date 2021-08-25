@@ -426,6 +426,7 @@ def main():
             RandomCut(),
             NegativeImage(),
             VerticalFlip(),
+            HorizontalFlip(),
             Rotate(),
             ColRec(),
             GaussianNoise(),
@@ -526,6 +527,8 @@ def main():
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
                                  batch_size=1)
         with torch.no_grad():
+            distance_p = []
+            distance_n = []
             for i, data in enumerate(test_loader, 0):
                 img_name = 'test_{}.jpg'.format(i)
                 img_pth = args.images + img_name
@@ -538,12 +541,18 @@ def main():
                 score = net(q_img, r_img).cpu()
                 if label == 0:
                     label = 'matched'
+                    distance_p.append(score.item())
                     print('matched with distance: {:.4f}\n'.format(score.item()))
                 if label == 1:
                     label = 'not matched'
+                    distance_p.append(score.item())
                     print('not matched with distance: {:.4f}\n'.format(score.item()))
                 imshow(torchvision.utils.make_grid(concatenated),
                        'Dissimilarity: {:.2f} Label: {}'.format(score.item(), label), should_save=True, pth=img_pth)
+        mean_distance_p = torch.mean(torch.Tensor(distance_p))
+        mean_distance_n = torch.mean(torch.Tensor(distance_n))
+        print('not matched mean distance: {:.4f}\n'.format(mean_distance_n))
+        print('matched mean distance: {:.4f}\n'.format(mean_distance_p))
 
         if args.batch_size == 1:
             with torch.no_grad():
