@@ -310,7 +310,8 @@ class TrainList(Dataset):
     def __getitem__(self, i):
         label = random.randint(0, 1)
         background = Image.open(random.sample(self.image_list, 1)[0])
-        self.argumentation.insert(MergeImage(0.5, background))
+        idx = random.randint(0, len(self.argumentation) -1)
+        self.argumentation.insert(MergeImage(0.5, background), idx)
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
         if label == 0:
