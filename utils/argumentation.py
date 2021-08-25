@@ -158,16 +158,42 @@ class NegativeImage(object):
         return image
 
 
+class MergeImage(object):
+    def __init__(self, background, probability=0.5):
+        self.p = probability
+        self.bg_image = background
+
+    def __call__(self, image):
+        zoom_max = 1.5
+        zoom_min = 1.3
+        if random.random() < self.p:
+            image = np.array(image)
+            im_y, im_x = image.shape[0], image.shape[1]
+            zoom_factor = np.random.uniform(zoom_min, zoom_max)
+            size_y = int(im_y * zoom_factor)
+            size_x = int(im_x * zoom_factor)
+            bg_img = self.bg_image.resize((size_x, size_y))
+            bg_img = np.array(bg_img)
+            x = np.random.randint(size_x - im_x)
+            y = np.random.randint(size_y - im_y)
+            bg_img[y: y + im_y, x: x + im_x] = image
+            image = np.asarray(bg_img, dtype=np.uint8)
+            image = Image.fromarray(np.uint8(image))
+            image = image.resize((im_y, im_x))
+        return image
+
+# background = np.ones((50, 53, 3))
 # img = np.ones((100, 203, 3))
 # img_pil = Image.fromarray(np.uint8(img))
+# background_pil = Image.fromarray(np.uint8(background))
 # list = [
 #     NegativeImage(1.0),
 #     RandomCut(1.0),
-#     ZoomIn(1.0),
+#     MergeImage(background_pil, 1.0),
+#     ZoomOut(1.0),
 #     HorizontalFlip(1.0),
 # ]
 # random.shuffle(list)
-# print(list)
 # trans = transforms.Compose(list)
 # img = trans(img_pil)
 # print(img.size)

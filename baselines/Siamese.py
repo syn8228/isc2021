@@ -309,10 +309,14 @@ class TrainList(Dataset):
 
     def __getitem__(self, i):
         label = random.randint(0, 1)
+        background = Image.open(random.sample(self.image_list, 1)[0])
+        self.argumentation.insert(MergeImage(0.5, background))
+        random.shuffle(self.argumentation)
+        argument = Compose(self.argumentation)
         if label == 0:
             query_image = Image.open(self.image_list[i])
             query_image = query_image.convert("RGB")
-            db_image = self.argumentation(query_image)
+            db_image = argument(query_image)
             if self.transform is not None:
                 query_image = self.transform(query_image)
                 db_image = self.transform(db_image)
@@ -454,10 +458,10 @@ def main():
         epoch_losses = list()
         epoch_size = int(len(train_images)/args.epoch)
         for epoch in range(args.epoch):
-            random.shuffle(argu_list)
-            argumentations = Compose(argu_list)
+            # random.shuffle(argu_list)
+            # argumentations = Compose(argu_list)
             train_subset = train_images[epoch * epoch_size: (epoch+1)*epoch_size - 1]
-            im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argumentations)
+            im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argu_list)
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
             for i, data in enumerate(train_dataloader, 0):
