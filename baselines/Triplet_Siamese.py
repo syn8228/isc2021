@@ -245,7 +245,7 @@ class TripletLoss(torch.nn.Module):
         super(TripletLoss, self).__init__()
 
     def forward(self, score_positive, score_negative):
-        loss = torch.mean(torch.clamp(torch.pow(score_positive, 2) - torch.pow(score_negative, 2) + 10, min=0.0))
+        loss = torch.mean(torch.clamp(torch.pow(score_positive, 2) - torch.pow(score_negative, 2) + 15, min=0.0))
         return loss
 
 
@@ -420,14 +420,12 @@ def main():
     if args.train:
 
         argu_list = [
-            RandomCut(),
-            NegativeImage(),
             VerticalFlip(),
             HorizontalFlip(),
+            GaussianBlur(),
             Rotate(),
             ColRec(),
             GaussianNoise(),
-            GaussianBlur(),
             ZoomIn(),
             ZoomOut(),
             RandomCut(),

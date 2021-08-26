@@ -397,11 +397,11 @@ def main():
     db_list = [l.strip() for l in open(args.db_list, "r")]
     train_list = [l.strip() for l in open(args.train_list, "r")]
 
+    query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
+
     if args.i1 != -1 or args.i0 != 0:
         db_list = db_list[args.i0:args.i1]
-        train_list = train_list[args.i0:args.i1]
-
-    query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
+        train_list = train_images[args.i0:args.i1]
 
 
     # transform
@@ -427,14 +427,12 @@ def main():
 
     if args.train:
         argu_list = [
-            RandomCut(),
-            NegativeImage(),
             VerticalFlip(),
             HorizontalFlip(),
+            GaussianBlur(),
             Rotate(),
             ColRec(),
             GaussianNoise(),
-            GaussianBlur(),
             ZoomIn(),
             ZoomOut(),
             RandomCut(),
@@ -443,8 +441,8 @@ def main():
 
 
         print("training network")
-        v_list = generate_validation_dataset(query_list, gt_list, train_list, 2000)
-        val_pairs = ValList(v_list, transform=transforms, imsize=args.imsize)
+        val_list = train_images[0:2000]
+        val_pairs = TrainList(val_list, transform=transforms, imsize=args.imsize)
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
         print("loading model")
@@ -458,9 +456,7 @@ def main():
         epoch_losses = list()
         epoch_size = int(len(train_images)/args.epoch)
         for epoch in range(args.epoch):
-            # random.shuffle(argu_list)
-            # argumentations = Compose(argu_list)
-            train_subset = train_images[epoch * epoch_size: (epoch+1)*epoch_size - 1]
+            train_subset = train_list[epoch * epoch_size: (epoch+1)*epoch_size - 1]
             im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argu_list)
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
