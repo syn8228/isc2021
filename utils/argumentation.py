@@ -77,8 +77,8 @@ class ColRec(object):
         self.n_rect = n_rectangle
 
     def __call__(self, image):
-        x_size = 15
-        y_size = 15
+        x_size = 30
+        y_size = 30
         if random.random() < self.p:
 
             image = np.array(image)
@@ -108,7 +108,7 @@ class ZoomIn(object):
             y = im_y - size_y
             image = image[y: y+size_y, x: x+size_x]
             image = Image.fromarray(np.uint8(image))
-            image = image.resize((im_y, im_x))
+            image = image.resize((im_x, im_y))
         return image
 
 
@@ -131,7 +131,7 @@ class ZoomOut(object):
             image_black[y: y + im_y, x: x + im_x] = image
             image = np.asarray(image_black, dtype=np.uint8)
             image = Image.fromarray(np.uint8(image))
-            image = image.resize((im_y, im_x))
+            image = image.resize((im_x, im_y))
         return image
 
 
@@ -141,7 +141,7 @@ class RandomCut(object):
 
     def __call__(self, image):
         if random.random() < self.p:
-            transform = transforms.RandomResizedCrop(image.size)
+            transform = transforms.RandomResizedCrop((image.size[1], image.size[0]))
             image = transform(image)
         return image
 
@@ -179,7 +179,7 @@ class MergeImage(object):
             bg_img[y: y + im_y, x: x + im_x] = image
             image = np.asarray(bg_img, dtype=np.uint8)
             image = Image.fromarray(np.uint8(image))
-            image = image.resize((im_y, im_x))
+            image = image.resize((im_x, im_y))
         return image
 
 # background = np.ones((50, 53, 3))
