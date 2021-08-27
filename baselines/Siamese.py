@@ -454,7 +454,7 @@ def main():
                                      lr=args.lr, weight_decay=args.weight_decay)
         loss_history = list()
         epoch_losses = list()
-        epoch_size = int(len(train_images)/args.epoch)
+        epoch_size = int(len(train_list)/args.epoch)
         for epoch in range(args.epoch):
             train_subset = train_list[epoch * epoch_size: (epoch+1)*epoch_size - 1]
             im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argu_list)
