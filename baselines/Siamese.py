@@ -442,7 +442,7 @@ def main():
 
         print("training network")
         val_list = train_images[0:2000]
-        val_pairs = TrainList(val_list, transform=transforms, imsize=args.imsize)
+        val_pairs = TrainList(val_list, transform=transforms, imsize=args.imsize, argumentation=argu_list)
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
         print("loading model")
@@ -475,7 +475,7 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if (i+1) % 100 == 0:
+                if (i+1) % 200 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
 
