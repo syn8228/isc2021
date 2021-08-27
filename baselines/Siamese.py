@@ -314,15 +314,15 @@ class TrainList(Dataset):
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
         if label == 0:
-            query_image = Image.open(self.image_list[i])
-            query_image = query_image.convert("RGB")
-            db_image = argument(query_image)
+            db_image = Image.open(self.image_list[i])
+            db_image = db_image.convert("RGB")
+            query_image = argument(db_image)
             if self.transform is not None:
                 query_image = self.transform(query_image)
                 db_image = self.transform(db_image)
         else:
-            query_image = Image.open(self.image_list[i])
-            db_image = Image.open(random.sample(self.image_list, 1)[0])
+            db_image = Image.open(self.image_list[i])
+            query_image = Image.open(random.sample(self.image_list, 1)[0])
             query_image = query_image.convert("RGB")
             db_image = db_image.convert("RGB")
             if self.transform is not None:
