@@ -441,7 +441,7 @@ def main():
 
 
         print("training network")
-        val_list = train_images[0:2000]
+        val_list = train_images[0:args.len]
         val_pairs = TrainList(val_list, transform=transforms, imsize=args.imsize, argumentation=argu_list)
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
@@ -475,7 +475,7 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if (i+1) % 200 == 0:
+                if (i+1) % 500 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
 
@@ -492,7 +492,7 @@ def main():
                     label = label_cp.to(args.device)
                     output = net(q_img, r_img)
                     val_loss += criterion(output, label)
-                val_loss /= 2000
+                val_loss /= args.len
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
 

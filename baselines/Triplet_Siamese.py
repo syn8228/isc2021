@@ -390,11 +390,11 @@ def main():
     query_list = [l.strip() for l in open(args.query_list, "r")]
     db_list = [l.strip() for l in open(args.db_list, "r")]
     train_list = [l.strip() for l in open(args.train_list, "r")]
+    query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
+
     if args.i1 != -1 or args.i0 != 0:
         db_list = db_list[args.i0:args.i1]
-        train_list = train_list[args.i0:args.i1]
-
-    query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
+        train_list = train_images[args.i0:args.i1]
 
     # transform
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
@@ -439,9 +439,9 @@ def main():
         # im_pairs = TrainList(t_list, transform=transforms, imsize=args.imsize)
         # train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
         #                               batch_size=args.batch_size)
-        v_list = generate_validation_dataset(query_list, gt_list, train_list, args.len)
+        val_list = train_images[0:args.len]
 
-        val_pairs = ValList(v_list, transform=transforms, imsize=args.imsize)
+        val_pairs = TrainList(val_list, transform=transforms, imsize=args.imsize, argumentation=argu_list)
 
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
@@ -454,9 +454,9 @@ def main():
                                      lr=args.lr, weight_decay=args.weight_decay)
         loss_history = list()
         epoch_losses = list()
-        epoch_size = int(len(train_images) / args.epoch)
+        epoch_size = int(len(train_list) / args.epoch)
         for epoch in range(args.epoch):
-            train_subset = train_images[epoch * epoch_size: (epoch + 1) * epoch_size - 1]
+            train_subset = train_list[epoch * epoch_size: (epoch + 1) * epoch_size - 1]
 
             im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argu_list)
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
@@ -476,7 +476,7 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if (i+1) % 200 == 0:
+                if (i+1) % 500 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
 
