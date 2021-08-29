@@ -435,8 +435,8 @@ def main():
             GaussianNoise(),
             ZoomIn(),
             ZoomOut(),
-            # RandomCut(),
-            # NegativeImage(),
+            RandomCut(0.2),
+            NegativeImage(0.1),
         ]
 
 
