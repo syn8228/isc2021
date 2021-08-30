@@ -282,7 +282,7 @@ class TrainList(Dataset):
 
     def __getitem__(self, i):
         background = Image.open(random.sample(self.image_list, 1)[0])
-        self.argumentation.append(MergeImage(background, 0.5))
+        self.argumentation.append(MergeImage(background, probability=0.3))
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
         query_image = Image.open(self.image_list[i])
@@ -393,8 +393,11 @@ def main():
     query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
 
     if args.i1 != -1 or args.i0 != 0:
-        db_list = db_list[args.i0:args.i1]
+        db_list = db_images[args.i0:args.i1]
         train_list = train_images[args.i0:args.i1]
+    else:
+        db_list = db_images
+        train_list = train_images
 
     # transform
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
@@ -420,16 +423,16 @@ def main():
     if args.train:
 
         argu_list = [
-            VerticalFlip(),
-            HorizontalFlip(),
-            GaussianBlur(),
-            Rotate(),
-            ColRec(),
-            GaussianNoise(),
-            ZoomIn(),
-            ZoomOut(),
-            RandomCut(),
-            NegativeImage(),
+            VerticalFlip(probability=0.8),
+            HorizontalFlip(probability=0.8),
+            Rotate(probability=0.8),
+            GaussianBlur(probability=0.5),
+            ColRec(probability=0.5),
+            GaussianNoise(probability=0.5),
+            ZoomIn(probability=0.5),
+            ZoomOut(probability=0.5),
+            RandomCut(0.2),
+            NegativeImage(0.1),
         ]
 
         print("training network")
@@ -476,12 +479,12 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if (i+1) % 500 == 0:
+                if (i+1)*args.batch_size % 500 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
 
                     print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
-            val_loss = 0.0
+            val_loss = []
             with torch.no_grad():
                 for j, data in enumerate(val_dataloader, 0):
                     q_img, rp_img, rn_img = data
@@ -492,8 +495,8 @@ def main():
                     rp_img = rp_img_cp.to(args.device)
                     rn_img = rn_img_cp.to(args.device)
                     score_p, score_n = net(q_img, rp_img, rn_img)
-                    val_loss += criterion(score_p, score_n)
-                val_loss /= args.len
+                    val_loss.append(criterion(score_p, score_n))
+                val_loss = torch.mean(torch.Tensor(val_loss))
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
 
