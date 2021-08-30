@@ -297,19 +297,20 @@ class ValList(Dataset):
 
 class TrainList(Dataset):
 
-    def __init__(self, image_list, imsize=None, transform=None, argumentation=None):
+    def __init__(self, image_list, full_list, imsize=None, transform=None, argumentation=None):
         Dataset.__init__(self)
         self.image_list = image_list
         self.transform = transform
         self.imsize = imsize
         self.argumentation = argumentation
+        self.full_list = full_list
 
     def __len__(self):
         return len(self.image_list)
 
     def __getitem__(self, i):
         label = random.randint(0, 1)
-        background = Image.open(random.sample(self.image_list, 1)[0])
+        background = Image.open(random.sample(self.full_list, 1)[0])
         self.argumentation.append(MergeImage(background, probability=0.2))
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
@@ -322,7 +323,7 @@ class TrainList(Dataset):
                 db_image = self.transform(db_image)
         else:
             db_image = Image.open(self.image_list[i])
-            query_image = Image.open(random.sample(self.image_list, 1)[0])
+            query_image = Image.open(random.sample(self.full_list, 1)[0])
             query_image = query_image.convert("RGB")
             db_image = db_image.convert("RGB")
             if self.transform is not None:
@@ -445,7 +446,7 @@ def main():
 
         print("training network")
         val_list = train_images[0:args.len]
-        val_pairs = TrainList(val_list, transform=transforms, imsize=args.imsize, argumentation=argu_list)
+        val_pairs = TrainList(val_list, train_images, transform=transforms, imsize=args.imsize, argumentation=argu_list)
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
         print("loading model")
@@ -460,7 +461,7 @@ def main():
         epoch_size = int(len(train_list)/args.epoch)
         for epoch in range(args.epoch):
             train_subset = train_list[epoch * epoch_size: (epoch+1)*epoch_size - 1]
-            im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argu_list)
+            im_pairs = TrainList(train_subset, train_images, transform=transforms, imsize=args.imsize, argumentation=argu_list)
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
             for i, data in enumerate(train_dataloader, 0):
