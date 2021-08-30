@@ -173,7 +173,7 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
             v_list.append((q, r, label))
         else:
             q = random.sample(query_list, 1)[0]
-            r = random.sample(train_list, 1)[0]
+            t = random.sample(train_list, 1)[0]
             # q = QUERY + q + ".jpg"
             # t = TRAIN + r + ".jpg"
             v_list.append((q, t, label))
