@@ -400,8 +400,11 @@ def main():
     query_images, db_images, train_images = generate_extraction_dataset(query_list, db_list, train_list)
 
     if args.i1 != -1 or args.i0 != 0:
-        db_list = db_list[args.i0:args.i1]
+        db_list = db_images[args.i0:args.i1]
         train_list = train_images[args.i0:args.i1]
+    else:
+        db_list = db_images
+        train_list = train_images
 
 
     # transform
@@ -433,8 +436,8 @@ def main():
             GaussianBlur(probability=0.5),
             ColRec(probability=0.5),
             GaussianNoise(probability=0.5),
-            ZoomIn(probability=0.3),
-            ZoomOut(probability=0.3),
+            ZoomIn(probability=0.5),
+            ZoomOut(probability=0.5),
             RandomCut(0.2),
             NegativeImage(0.1),
         ]
