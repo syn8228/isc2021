@@ -310,7 +310,7 @@ class TrainList(Dataset):
     def __getitem__(self, i):
         label = random.randint(0, 1)
         background = Image.open(random.sample(self.image_list, 1)[0])
-        self.argumentation.append(MergeImage(background, 0.5))
+        self.argumentation.append(MergeImage(background, probability=0.2))
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
         if label == 0:
@@ -427,14 +427,14 @@ def main():
 
     if args.train:
         argu_list = [
-            VerticalFlip(),
-            HorizontalFlip(),
-            GaussianBlur(),
-            Rotate(),
-            ColRec(),
-            GaussianNoise(),
-            ZoomIn(),
-            ZoomOut(),
+            VerticalFlip(probability=0.8),
+            HorizontalFlip(probability=0.8),
+            Rotate(probability=0.8),
+            GaussianBlur(probability=0.5),
+            ColRec(probability=0.5),
+            GaussianNoise(probability=0.5),
+            ZoomIn(probability=0.3),
+            ZoomOut(probability=0.3),
             RandomCut(0.2),
             NegativeImage(0.1),
         ]
@@ -475,12 +475,12 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if (i+1) % 500 == 0:
+                if (i+1)*args.batch_size % 500 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
 
                     print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
-            val_loss = 0.0
+            val_loss = []
             with torch.no_grad():
                 for j, data in enumerate(val_dataloader, 0):
                     q_img, r_img, label = data
@@ -491,8 +491,8 @@ def main():
                     r_img = r_img_cp.to(args.device)
                     label = label_cp.to(args.device)
                     output = net(q_img, r_img)
-                    val_loss += criterion(output, label)
-                val_loss /= args.len
+                    val_loss.append(criterion(output, label))
+                val_loss = torch.mean(torch.Tensor(val_loss))
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
 
