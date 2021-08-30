@@ -163,7 +163,7 @@ def generate_validation_dataset(query_list, gt_list, train_list, len_data):
         r_negative = random.sample(train_list, 1)[0]
         q = QUERY + q + ".jpg"
         r_positive = REFERENCE + r_positive + ".jpg"
-        r_negative = TRAIN + r_negative + ".jpg"
+        #r_negative = TRAIN + r_negative + ".jpg"
         v_list.append((q, r_positive, r_negative))
     return v_list
 
@@ -270,25 +270,26 @@ class ImageList(Dataset):
 
 class TrainList(Dataset):
 
-    def __init__(self, image_list, imsize=None, transform=None, argumentation=None):
+    def __init__(self, image_list, full_list, imsize=None, transform=None, argumentation=None):
         Dataset.__init__(self)
         self.image_list = image_list
         self.transform = transform
         self.argumentation = argumentation
         self.imsize = imsize
+        self.full_list = full_list
 
     def __len__(self):
         return len(self.image_list)
 
     def __getitem__(self, i):
-        background = Image.open(random.sample(self.image_list, 1)[0])
+        background = Image.open(random.sample(self.full_list, 1)[0])
         self.argumentation.append(MergeImage(background, probability=0.3))
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
         query_image = Image.open(self.image_list[i])
         query_image = query_image.convert("RGB")
         db_positive = argument(query_image)
-        db_negative = Image.open(random.sample(self.image_list, 1)[0])
+        db_negative = Image.open(random.sample(self.full_list, 1)[0])
         db_negative = db_negative.convert("RGB")
         if self.transform is not None:
             query_image = self.transform(query_image)
@@ -444,7 +445,7 @@ def main():
         #                               batch_size=args.batch_size)
         val_list = train_images[0:args.len]
 
-        val_pairs = TrainList(val_list, transform=transforms, imsize=args.imsize, argumentation=argu_list)
+        val_pairs = TrainList(val_list, train_images, transform=transforms, imsize=args.imsize, argumentation=argu_list)
 
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
@@ -461,7 +462,7 @@ def main():
         for epoch in range(args.epoch):
             train_subset = train_list[epoch * epoch_size: (epoch + 1) * epoch_size - 1]
 
-            im_pairs = TrainList(train_subset, transform=transforms, imsize=args.imsize, argumentation=argu_list)
+            im_pairs = TrainList(train_subset, train_images, transform=transforms, imsize=args.imsize, argumentation=argu_list)
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
             for i, data in enumerate(train_dataloader, 0):
@@ -526,7 +527,7 @@ def main():
         net.to(args.device)
         print("checkpoint {} loaded\n".format(args.checkpoint))
         print("test model\n")
-        test_list = generate_validation_dataset(query_list, gt_list, train_list, 20)
+        test_list = generate_validation_dataset(query_list, gt_list, train_images, 20)
         test_data = ValList(test_list, transform=transforms, imsize=args.imsize)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
                                  batch_size=1)
