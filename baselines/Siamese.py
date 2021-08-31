@@ -244,13 +244,12 @@ class SiameseNetwork(nn.Module):
 
 
 class ContrastiveLoss(torch.nn.Module):
-    def __int__(self, margin):
+    def __int__(self):
         super(ContrastiveLoss, self).__init__()
-        self.margin = margin
 
-    def forward(self, score, label):
+    def forward(self, score, label, margin):
         loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) +
-                          label * 0.5 * torch.pow(torch.clamp(self.margin - score, min=0.0), 2))
+                          label * 0.5 * torch.pow(torch.clamp(margin - score, min=0.0), 2))
         return loss
 
 
@@ -454,7 +453,7 @@ def main():
         print("loading model")
         net = SiameseNetwork(args.model)
         net.to(args.device)
-        criterion = ContrastiveLoss(args.margin)
+        criterion = ContrastiveLoss()
         criterion.to(args.device)
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()),
                                      lr=args.lr, weight_decay=args.weight_decay)
@@ -476,7 +475,7 @@ def main():
                 label = label_cp.to(args.device)
                 output = net(q_img, r_img)
                 optimizer.zero_grad()
-                loss = criterion(output, label)
+                loss = criterion(output, label, args.margin)
                 loss.backward()
                 optimizer.step()
                 loss_history.append(loss)
@@ -497,7 +496,7 @@ def main():
                     r_img = r_img_cp.to(args.device)
                     label = label_cp.to(args.device)
                     output = net(q_img, r_img)
-                    val_loss.append(criterion(output, label))
+                    val_loss.append(criterion(output, label, args.margin))
                 val_loss = torch.mean(torch.Tensor(val_loss))
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
