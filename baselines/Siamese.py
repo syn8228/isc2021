@@ -244,12 +244,13 @@ class SiameseNetwork(nn.Module):
 
 
 class ContrastiveLoss(torch.nn.Module):
-    def __int__(self):
+    def __int__(self, margin):
         super(ContrastiveLoss, self).__init__()
+        self.margin = margin
 
     def forward(self, score, label):
         loss = torch.mean((1 - label) * 0.5 * torch.pow(score, 2) +
-                          label * 0.5 * torch.pow(torch.clamp(15.0 - score, min=0.0), 2))
+                          label * 0.5 * torch.pow(torch.clamp(self.margin - score, min=0.0), 2))
         return loss
 
 
@@ -357,6 +358,7 @@ def main():
     aa('--imsize', default=512, type=int, help="max image size at extraction time")
     aa('--lr', default=0.0001, type=float, help="learning rate")
     aa('--weight_decay', default=0.0005, type=float, help="max image size at extraction time")
+    aa('--margin', default=10.0, type=float, help="margin in loss function")
 
     group = parser.add_argument_group('dataset options')
     aa('--query_list', required=True, help="file with  query image filenames")
@@ -452,7 +454,7 @@ def main():
         print("loading model")
         net = SiameseNetwork(args.model)
         net.to(args.device)
-        criterion = ContrastiveLoss()
+        criterion = ContrastiveLoss(args.margin)
         criterion.to(args.device)
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()),
                                      lr=args.lr, weight_decay=args.weight_decay)
@@ -555,6 +557,7 @@ def main():
                        'Dissimilarity: {:.2f} Label: {}'.format(score.item(), label), should_save=True, pth=img_pth)
         mean_distance_p = torch.mean(torch.Tensor(distance_p))
         mean_distance_n = torch.mean(torch.Tensor(distance_n))
+        print('-------------------------------------------------------------')
         print('not matched mean distance: {:.4f}\n'.format(mean_distance_n))
         print('matched mean distance: {:.4f}\n'.format(mean_distance_p))
 

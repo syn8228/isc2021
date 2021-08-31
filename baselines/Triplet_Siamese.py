@@ -532,6 +532,8 @@ def main():
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
                                  batch_size=1)
         with torch.no_grad():
+            p_distance = []
+            n_distance = []
             for i, data in enumerate(test_loader, 0):
                 img_name = 'test_{}.jpg'.format(i)
                 img_pth = args.images + img_name
@@ -550,12 +552,17 @@ def main():
                 score = net.calculate_distance(q_img, r_img).cpu()
                 if label == 0:
                     label = 'matched'
+                    p_distance.append(score.item())
                     print('matched with distance: {:.4f}\n'.format(score.item()))
                 if label == 1:
                     label = 'not matched'
+                    n_distance.append(score.item())
                     print('not matched with distance: {:.4f}\n'.format(score.item()))
                 imshow(torchvision.utils.make_grid(concatenated),
                        'Dissimilarity: {:.2f} Label: {}'.format(score.item(), label), should_save=True, pth=img_pth)
+            print('-------------------------------------------------------------')
+            print('matched mean distance: {:.4f}\n'.format(torch.mean(torch.Tensor(p_distance))))
+            print('not matched mean distance: {:.4f}\n'.format(torch.mean(torch.Tensor(n_distance))))
 
         if args.batch_size == 1:
             with torch.no_grad():
