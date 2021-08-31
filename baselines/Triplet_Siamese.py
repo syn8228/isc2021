@@ -244,8 +244,8 @@ class TripletLoss(torch.nn.Module):
     def __int__(self):
         super(TripletLoss, self).__init__()
 
-    def forward(self, score_positive, score_negative):
-        loss = torch.mean(torch.clamp(torch.pow(score_positive, 2) - torch.pow(score_negative, 2) + 15.0, min=0.0))
+    def forward(self, score_positive, score_negative, margin):
+        loss = torch.mean(torch.clamp(torch.pow(score_positive, 2) - torch.pow(score_negative, 2) + margin, min=0.0))
         return loss
 
 
@@ -351,6 +351,7 @@ def main():
     aa('--imsize', default=512, type=int, help="max image size at extraction time")
     aa('--lr', default=0.0001, type=float, help="learning rate")
     aa('--weight_decay', default=0.0005, type=float, help="max image size at extraction time")
+    aa('--margin', default=10.0, type=float, help="margin in loss function")
 
     group = parser.add_argument_group('dataset options')
     aa('--query_list', required=True, help="file with  query image filenames")
@@ -475,7 +476,7 @@ def main():
                 rn_img = rn_img_cp.to(args.device)
                 score_p, score_n = net(q_img, rp_img, rn_img)
                 optimizer.zero_grad()
-                loss = criterion(score_p, score_n)
+                loss = criterion(score_p, score_n, args.margin)
                 loss.backward()
                 optimizer.step()
                 loss_history.append(loss)
@@ -496,7 +497,7 @@ def main():
                     rp_img = rp_img_cp.to(args.device)
                     rn_img = rn_img_cp.to(args.device)
                     score_p, score_n = net(q_img, rp_img, rn_img)
-                    val_loss.append(criterion(score_p, score_n))
+                    val_loss.append(criterion(score_p, score_n, args.margin))
                 val_loss = torch.mean(torch.Tensor(val_loss))
             print("Epoch:{},  Current validation loss {}\n".format(epoch, val_loss))
             epoch_losses.append(val_loss.cpu())
