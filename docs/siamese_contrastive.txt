@@ -1,6 +1,9 @@
 # SiameseNetwork trained by Contrastive Loss
 
-Training Example:
+Path to 3 images datasets are global variables in code siamese.py
+
+#Training 
+Example:
 python3	isc2021/baselines/Siamese.py 
 --train
 --query_list isc2021/list_files/subset_1_queries
@@ -13,13 +16,14 @@ python3	isc2021/baselines/Siamese.py
 --len 2000 
 --lr 0.00003 
 --weight_decay 0.00005 
+-- margin 15.0
 --i0 0 
 --i1 400
 
 Options:
 --transpose: insert one of the 7 PIL transpose, default:-1
 --train: train network or use network for feature extraction
---device: pytorch device, default:¡±cuda:0¡±
+--device: pytorch device, default: cuda:0
 --batch_size: Dataloader batch size
 --num_workers: number of Dataloader workers
 
@@ -27,6 +31,7 @@ Model Options:
 --model: select pretrained model
 --lr: learning rate
 --weight_decay: l2 regularization weight
+-- margin: margin in loss function
 
 Model list: 
 zoo_resnet50: 	use resnet50 from pytorch
@@ -49,6 +54,44 @@ Dataset Options:
 
 Output Options:
 --net: save checkpoint to this folder  
+
+
+#Feature Extraction
+Example:
+python3 isc2021/baselines/Siamese.py 
+--query_list isc2021/list_files/subset_1_queries 
+--gt_list isc2021/list_files/subset_1_ground_truth.csv 
+--train_list isc2021/list_files/train 
+--db_list isc2021/list_files/subset_1_references 
+--model visformer 
+--batch_size 32 
+--checkpoint Siamese_Epoch_50.pth
+
+Options:
+--transpose: insert one of the 7 PIL transpose, should same as training
+--train: train network or use network for feature extraction
+--device: pytorch device, default: cuda:0
+--batch_size: Dataloader batch size
+--num_workers: number of Dataloader workers
+
+Model Options:
+--model: select pretrained model, should given as same as the model used for training
+--net: folder where checkpoint saved, same as training 
+--checkpoint: name of best saved checkpoint, given by training result
+
+Dataset Options:
+--query_list: path to file with name of query images that to be extracted
+--db_list: path to file with name of reference images that to be extracted
+--gt_list: path to file with list of ground truth
+--train_list: path to file with name of images in training dataset
+
+Output options:
+--query_f: default="isc2021/data/query_siamese.hdf5", help="write query features to this file"
+--db_f: default="isc2021/data/db_siamese.hdf5", help="write reference features to this file"
+--train_f: default="isc2021/data/train_siamese.hdf5", help="write training features to this file"
+--images: default="isc2021/data/images/siamese/", help="save visualized test result to this folder"
+
+
 
 
 
