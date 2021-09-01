@@ -283,7 +283,7 @@ class TrainList(Dataset):
 
     def __getitem__(self, i):
         background = Image.open(random.sample(self.full_list, 1)[0])
-        self.argumentation.append(MergeImage(background, probability=0.3))
+        self.argumentation.append(MergeImage(background, probability=0.5))
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
         query_image = Image.open(self.image_list[i])
@@ -425,16 +425,16 @@ def main():
     if args.train:
 
         argu_list = [
-            VerticalFlip(probability=0.8),
-            HorizontalFlip(probability=0.8),
-            Rotate(probability=0.8),
+            VerticalFlip(probability=0.5),
+            HorizontalFlip(probability=0.5),
+            Rotate(probability=0.5),
             GaussianBlur(probability=0.5),
             ColRec(probability=0.5),
             GaussianNoise(probability=0.5),
             ZoomIn(probability=0.5),
             ZoomOut(probability=0.5),
-            RandomCut(0.2),
-            NegativeImage(0.1),
+            RandomCut(0.5),
+            NegativeImage(0.5),
         ]
 
         print("training network")
