@@ -181,7 +181,7 @@ class SiameseNetwork(nn.Module):
         self.head = load_model(model, CHECK)
         for p in self.parameters():
             p.requires_grad = False
-        if model == "zoo_resnet50" or model == "multigrain_resnet50" or model == "resnet152":
+        if model == "zoo_resnet50" or model == "multigrain_resnet50":
             self.map = True
         else:
             self.map = False
