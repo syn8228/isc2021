@@ -71,6 +71,27 @@ class GaussianNoise(object):
         return image
 
 
+class ChangeColor(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        rgb = random.randint(1, 3)
+        if random.random() < self.p:
+            image = np.asarray(image, dtype=np.float32)
+            if rgb == 1:
+                image[:, :, 0] += 50
+            elif rgb == 2:
+                image[:, :, 1] += 50
+            else:
+                image[:, :, 2] += 50
+            image[image > 255] = 255
+            image[image < 0] = 0
+            image = np.asarray(image, dtype=np.uint8)
+            image = Image.fromarray(np.uint8(image))
+        return image
+
+
 class ColRec(object):
     def __init__(self, probability=0.5, n_rectangle=10):
         self.p = probability

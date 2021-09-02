@@ -435,6 +435,7 @@ def main():
             ZoomOut(probability=0.5),
             RandomCut(0.5),
             NegativeImage(0.5),
+            ChangeColor(0.5),
         ]
 
         print("training network")
