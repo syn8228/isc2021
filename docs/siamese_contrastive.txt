@@ -92,6 +92,20 @@ Output options:
 --images: default="isc2021/data/images/siamese/", help="save visualized test result to this folder"
 
 
+# Evaluation
+Example:
+python3 isc2021/scripts/compute_metrics.py 
+--query_descs isc2021/data/query_siamese.hdf5 
+--db_descs isc2021/data/db_siamese.hdf5 
+--gt_filepath isc2021/list_files/subset_1_ground_truth.csv 
+--track2 
+--max_dim 2000
 
+Options:
+--query_descs: hdf5 file with extracted query features
+--db_descs: hdf5 file with extracted reference features
+--gt_filepath: ground trouth file
+--track2: evaluation for track2 or track1
+--max_dim: max. dimensionality of feature vectors
 
 
