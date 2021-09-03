@@ -310,8 +310,8 @@ class TrainList(Dataset):
 
     def __getitem__(self, i):
         label = random.randint(0, 1)
-        background = Image.open(random.sample(self.full_list, 1)[0])
-        self.argumentation.append(MergeImage(background, probability=0.2))
+        # background = Image.open(random.sample(self.full_list, 1)[0])
+        # self.argumentation.append(MergeImage(background, probability=0.2))
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
         if label == 0:
@@ -435,13 +435,13 @@ def main():
             VerticalFlip(probability=0.8),
             HorizontalFlip(probability=0.8),
             Rotate(probability=0.8),
-            GaussianBlur(probability=0.5),
-            ColRec(probability=0.5),
-            GaussianNoise(probability=0.5),
-            ZoomIn(probability=0.5),
-            ZoomOut(probability=0.5),
-            RandomCut(0.2),
-            NegativeImage(0.1),
+            # GaussianBlur(probability=0.5),
+            # ColRec(probability=0.5),
+            # GaussianNoise(probability=0.5),
+            # ZoomIn(probability=0.5),
+            # ZoomOut(probability=0.5),
+            # RandomCut(0.2),
+            # NegativeImage(0.1),
         ]
 
 
@@ -527,7 +527,7 @@ def main():
         net.to(args.device)
         print("checkpoint {} loaded\n".format(args.checkpoint))
         print("test model\n")
-        test_list = generate_validation_dataset(query_images, gt_list, train_images, 20)
+        test_list = generate_validation_dataset(query_images, gt_list, train_images, 50)
         test_data = ValList(test_list, transform=transforms, imsize=args.imsize)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
                                  batch_size=1)
