@@ -1,6 +1,6 @@
 # SiameseNetwork trained by Contrastive Loss
 
-Path to 3 images datasets are global variables in code siamese.py
+Path to 3 images datasets and facebook resnet50 checkpoint are global variables in code siamese.py
 
 #Training 
 Example:
