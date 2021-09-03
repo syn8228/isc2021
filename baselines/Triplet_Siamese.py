@@ -429,13 +429,13 @@ def main():
             HorizontalFlip(probability=0.5),
             Rotate(probability=0.5),
             GaussianBlur(probability=0.5),
-            ColRec(probability=0.5),
-            GaussianNoise(probability=0.5),
+            ColRec(probability=0.7),
+            GaussianNoise(probability=0.7),
             ZoomIn(probability=0.5),
             ZoomOut(probability=0.5),
             RandomCut(0.5),
-            NegativeImage(0.5),
-            ChangeColor(0.5),
+            NegativeImage(0.7),
+            ChangeColor(0.7),
         ]
 
         print("training network")
