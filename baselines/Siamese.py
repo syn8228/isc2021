@@ -310,8 +310,8 @@ class TrainList(Dataset):
 
     def __getitem__(self, i):
         label = random.randint(0, 1)
-        # background = Image.open(random.sample(self.full_list, 1)[0])
-        # self.argumentation.append(MergeImage(background, probability=0.2))
+        background = Image.open(random.sample(self.full_list, 1)[0])
+        self.argumentation.append(MergeImage(background, probability=0.2))
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
         if label == 0:
@@ -435,13 +435,14 @@ def main():
             VerticalFlip(probability=0.8),
             HorizontalFlip(probability=0.8),
             Rotate(probability=0.8),
-            # GaussianBlur(probability=0.5),
-            # ColRec(probability=0.5),
-            # GaussianNoise(probability=0.5),
-            # ZoomIn(probability=0.5),
-            # ZoomOut(probability=0.5),
-            # RandomCut(0.2),
-            # NegativeImage(0.1),
+            GaussianBlur(probability=0.5),
+            ColRec(probability=0.5),
+            GaussianNoise(probability=0.5),
+            ZoomIn(probability=0.5),
+            ZoomOut(probability=0.5),
+            RandomCut(0.2),
+            NegativeImage(0.1),
+            ChangeColor(0.5),
         ]
 
 
