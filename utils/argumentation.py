@@ -303,6 +303,8 @@ class OverlayEmoji(object):
         meta = []
         aug = imaugs.OverlayEmoji(opacity=opacity, emoji_size=size, x_pos=x, y_pos=y, p=self.p)
         image = aug(image, metadata=meta)
+        covert = imaugs.ConvertColor(mode='RGB')
+        image = covert(image)
         return image
 
 
@@ -331,6 +333,8 @@ class OverlayText(object):
         meta = []
         aug = imaugs.OverlayText(font_size=size, opacity=opacity, color=color, x_pos=x, y_pos=y, p=self.p)
         image = aug(image, metadata=meta)
+        covert = imaugs.ConvertColor(mode='RGB')
+        image = covert(image)
         return image
 
 
