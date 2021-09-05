@@ -187,8 +187,8 @@ class MergeImage(object):
         self.bg_image = background
 
     def __call__(self, image):
-        zoom_max = 1.5
-        zoom_min = 1.3
+        zoom_max = 3.5
+        zoom_min = 1.5
         if random.random() < self.p:
             image = np.array(image)
             im_y, im_x = image.shape[0], image.shape[1]
@@ -333,6 +333,19 @@ class OverlayText(object):
         image = aug(image, metadata=meta)
         covert = imaugs.ConvertColor(mode='RGB')
         image = covert(image)
+        return image
+
+
+class AuglyRotate(object):
+    def __init__(self, probability=0.5, background=None):
+        self.p = probability
+        self.bg = background
+
+    def __call__(self, image):
+        deg = random.uniform(0, 360)
+        meta = []
+        aug = imaugs.Rotate(degrees=deg, p=self.p)
+        image = aug(image, metadata=meta)
         return image
 
 
