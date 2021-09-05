@@ -443,7 +443,7 @@ def main():
             RandomCut(0.2),
             NegativeImage(0.1),
             ChangeColor(0.5),
-            BlurImage(1.0)
+            OverlayEmoji(1.0)
         ]
 
 
