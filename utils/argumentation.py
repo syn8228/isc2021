@@ -4,6 +4,7 @@ import random
 import numpy as np
 from torchvision import transforms
 import augly.image.transforms as imaugs
+import augly.utils as utils
 
 from PIL import Image, ImageOps, ImageFilter
 
@@ -99,17 +100,19 @@ class ColRec(object):
         self.n_rect = n_rectangle
 
     def __call__(self, image):
-        x_size = 30
-        y_size = 30
         if random.random() < self.p:
 
             image = np.array(image)
             im_y, im_x = image.shape[0], image.shape[1]
             for i in range(self.n_rect):
+                x_size = random.randint(30, 70)
+                y_size = random.randint(30, 70)
                 x = np.random.randint(im_x - x_size)
                 y = np.random.randint(im_y - y_size)
-                color = np.random.randint(255, size=(1, 1, 3))
+                color = np.random.randint(255, size=(1, 1, image.shape[-1]))
+                print(color.shape)
                 image[y: y + y_size, x: x + x_size] = color
+            print(image.shape)
             image = Image.fromarray(np.uint8(image))
         return image
 
@@ -205,38 +208,140 @@ class MergeImage(object):
         return image
 
 
-class BlurImage(object):
+class ToGray(object):
     def __init__(self, probability=0.5):
         self.p = probability
 
     def __call__(self, image):
-        meta = []
-        aug = imaugs.Blur(p=self.p)
-        image = aug(image, metadata=meta)
+        if random.random() < self.p:
+            image = np.asarray(image, dtype=np.float32)
+            r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
+            gray = 0.2126*r + 0.7152*g + 0.0722*b
+            image[:, :, 0], image[:, :, 1], image[:, :, 2] = gray, gray, gray
+            image = Image.fromarray(np.uint8(image))
         return image
 
 
-class BrightnessImage(object):
+class AspectRatio(object):
     def __init__(self, probability=0.5):
         self.p = probability
 
     def __call__(self, image):
         factor = random.uniform(0, 2)
         meta = []
-        aug = imaugs.Brightness(factor=factor, p=self.p)
+        aug = imaugs.ChangeAspectRatio(ratio=factor, p=self.p)
         image = aug(image, metadata=meta)
         return image
+
+
+class Colorjitter(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        b = random.uniform(0.5, 3)
+        c = random.uniform(0.5, 3)
+        s = random.uniform(0.5, 3)
+        meta = []
+        aug = imaugs.ColorJitter(brightness_factor=b, contrast_factor=c, saturation_factor=s, p=self.p)
+        image = aug(image, metadata=meta)
+        return image
+
+
+class EncodingQuality(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        q = random.randint(10, 50)
+        meta = []
+        aug = imaugs.EncodingQuality(quality=30, p=self.p)
+        image = aug(image, metadata=meta)
+        return image
+
+
+class MemeFormat(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        seed = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+=-"
+        sa = []
+        len = random.randint(3, 5)
+        for i in range(len):
+            sa.append(random.choice(seed))
+        salt = ''.join(sa)
+        fg = tuple(np.random.randint(255, size=(3,)))
+        bg = tuple(np.random.randint(255, size=(3,)))
+        meta = []
+        aug = imaugs.MemeFormat(text=salt, text_color=fg, meme_bg_color=bg, p=self.p)
+        image = aug(image, metadata=meta)
+        return image
+
+
+class Opacity(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        lv = random.uniform(0.5, 0.9)
+        meta = []
+        aug = imaugs.Opacity(level=lv, p=self.p)
+        image = aug(image, metadata=meta)
+        return image
+
+
+class OverlayEmoji(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        opacity = random.uniform(0.5, 1.0)
+        size = random.uniform(0.2, 0.8)
+        x = random.uniform(0, 1)
+        y = random.uniform(0, 1)
+        meta = []
+        aug = imaugs.OverlayEmoji(opacity=opacity, emoji_size=size, x_pos=x, y_pos=y, p=self.p)
+        image = aug(image, metadata=meta)
+        return image
+
+
+class OverlayOntoScreenshot(object):
+    def __init__(self, probability=0.5, background=None):
+        self.p = probability
+        self.bg = background
+
+    def __call__(self, image):
+        meta = []
+        aug = imaugs.OverlayOntoScreenshot(p=self.p)
+        image = aug(image, metadata=meta)
+        return image
+
+
+class OverlayText(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        opacity = random.uniform(0.5, 1.0)
+        size = random.uniform(0.1, 0.5)
+        color = tuple(np.random.randint(255, size=(3,)))
+        x = random.uniform(0, 0.5)
+        y = random.uniform(0, 0.5)
+        meta = []
+        aug = imaugs.OverlayText(font_size=size, opacity=opacity, color=color, x_pos=x, y_pos=y, p=self.p)
+        image = aug(image, metadata=meta)
+        return image
+
+
+
 
 # background = np.ones((50, 53, 3))
 # img = np.ones((100, 203, 3))
 # img_pil = Image.fromarray(np.uint8(img))
 # background_pil = Image.fromarray(np.uint8(background))
 # list = [
-#     NegativeImage(1.0),
-#     RandomCut(1.0),
-#     MergeImage(background_pil, 1.0),
-#     ZoomOut(1.0),
-#     HorizontalFlip(1.0),
+#     BrightnessImage(1.0),
 # ]
 # random.shuffle(list)
 # trans = transforms.Compose(list)
