@@ -110,9 +110,7 @@ class ColRec(object):
                 x = np.random.randint(im_x - x_size)
                 y = np.random.randint(im_y - y_size)
                 color = np.random.randint(255, size=(1, 1, image.shape[-1]))
-                print(color.shape)
                 image[y: y + y_size, x: x + x_size] = color
-            print(image.shape)
             image = Image.fromarray(np.uint8(image))
         return image
 
