@@ -3,6 +3,7 @@ import numbers
 import random
 import numpy as np
 from torchvision import transforms
+import augly.image.transforms as imaugs
 
 from PIL import Image, ImageOps, ImageFilter
 
@@ -201,6 +202,29 @@ class MergeImage(object):
             image = np.asarray(bg_img, dtype=np.uint8)
             image = Image.fromarray(np.uint8(image))
             image = image.resize((im_x, im_y))
+        return image
+
+
+class BlurImage(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        meta = []
+        aug = imaugs.Blur(p=self.p)
+        image = aug(image, metadata=meta)
+        return image
+
+
+class BrightnessImage(object):
+    def __init__(self, probability=0.5):
+        self.p = probability
+
+    def __call__(self, image):
+        factor = random.uniform(0, 2)
+        meta = []
+        aug = imaugs.Brightness(factor=factor, p=self.p)
+        image = aug(image, metadata=meta)
         return image
 
 # background = np.ones((50, 53, 3))
