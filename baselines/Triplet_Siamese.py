@@ -283,7 +283,7 @@ class TrainList(Dataset):
 
     def __getitem__(self, i):
         background = Image.open(random.sample(self.full_list, 1)[0])
-        self.argumentation.append(MergeImage(background, probability=0.5))
+        self.argumentation.append(MergeImage(background, probability=0.2))
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
         query_image = Image.open(self.image_list[i])
@@ -425,17 +425,22 @@ def main():
     if args.train:
 
         argu_list = [
-            VerticalFlip(probability=0.8),
-            HorizontalFlip(probability=0.8),
-            Rotate(probability=0.8),
-            # GaussianBlur(probability=0.5),
-            # ColRec(probability=0.7),
-            # GaussianNoise(probability=0.7),
-            # ZoomIn(probability=0.5),
-            # ZoomOut(probability=0.5),
-            # RandomCut(0.5),
-            # NegativeImage(0.7),
-            # ChangeColor(0.7),
+            VerticalFlip(probability=0.25),
+            HorizontalFlip(probability=0.25),
+            AuglyRotate(probability=0.2),
+            GaussianBlur(probability=0.1),
+            ColRec(probability=0.2),
+            GaussianNoise(probability=0.1),
+            ZoomIn(probability=0.1),
+            ZoomOut(probability=0.1),
+            NegativeImage(probability=0.03),
+            ChangeColor(probability=0.2),
+            OverlayEmoji(probability=0.1),
+            OverlayText(probability=0.2),
+            EncodingQuality(probability=0.1),
+            Colorjitter(probability=0.1),
+            AspectRatio(probability=0.1),
+            OverlayOntoScreenshot(probability=0.1),
         ]
 
         print("training network")
@@ -460,6 +465,7 @@ def main():
                                      lr=args.lr, weight_decay=args.weight_decay)
         loss_history = list()
         epoch_losses = list()
+        train_losses = list()
         epoch_size = int(len(train_list) / args.epoch)
         for epoch in range(args.epoch):
             train_subset = train_list[epoch * epoch_size: (epoch + 1) * epoch_size - 1]
@@ -487,6 +493,7 @@ def main():
                     loss_history.clear()
 
                     print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
+            train_losses.append(mean_loss)
             val_loss = []
             with torch.no_grad():
                 for j, data in enumerate(val_dataloader, 0):
@@ -508,7 +515,19 @@ def main():
             torch.save(net.state_dict(), model_full_path)
             print('model saved as: {}\n'.format(trained_model_name))
 
+        train_losses = np.asarray(train_losses)
         epoch_losses = np.asarray(epoch_losses)
+        epochs = np.asarray(range(args.epoch))
+
+        plt.title('Loss Visualization')
+        plt.plot(epochs, train_losses, color='blue', label='training loss')
+        plt.plot(epochs, epoch_losses, color='red', label='validation loss')
+        plt.legend()
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.savefig(args.images+'loss.png')
+        plt.show()
+
         best_epoch = np.argmin(epoch_losses)
         best_model_name = 'Triplet_Epoch_{}.pth'.format(best_epoch)
         pth_files = glob.glob(args.net + '*.pth')
