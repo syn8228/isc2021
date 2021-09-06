@@ -105,8 +105,8 @@ class ColRec(object):
             image = np.array(image)
             im_y, im_x = image.shape[0], image.shape[1]
             for i in range(self.n_rect):
-                x_size = random.randint(30, 70)
-                y_size = random.randint(30, 70)
+                x_size = random.randint(int(im_x / 10), int(im_x / 6))
+                y_size = random.randint(int(im_y / 10), int(im_y / 6))
                 x = np.random.randint(im_x - x_size)
                 y = np.random.randint(im_y - y_size)
                 color = np.random.randint(255, size=(1, 1, image.shape[-1]))
