@@ -8,6 +8,7 @@ from collections import OrderedDict, defaultdict
 sys.path.append('/cluster/yinan/isc2021')
 
 from PIL import Image
+Image.MAX_IMAGE_PIXELS = None
 from isc.io import write_hdf5_descriptors, read_ground_truth, read_predictions, write_predictions, read_descriptors
 from utils.argumentation import *
 
