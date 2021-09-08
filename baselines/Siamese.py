@@ -438,7 +438,7 @@ def main():
             HorizontalFlip(probability=0.25),
             AuglyRotate(0.2),
             GaussianBlur(probability=0.1),
-            #ColRec(probability=0.2),
+            ColRec(probability=0.2),
             GaussianNoise(probability=0.1),
             ZoomIn(probability=0.1),
             ZoomOut(probability=0.1),
