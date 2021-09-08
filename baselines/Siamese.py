@@ -471,6 +471,7 @@ def main():
                                      lr=args.lr, weight_decay=args.weight_decay)
         loss_history = list()
         epoch_losses = list()
+        train_losses = list()
         epoch_size = int(len(train_list)/args.epoch)
         for epoch in range(args.epoch):
             train_subset = train_list[epoch * epoch_size: (epoch+1)*epoch_size - 1]
@@ -497,6 +498,7 @@ def main():
                     loss_history.clear()
 
                     print("Epoch:{},  Current training loss {}\n".format(epoch, mean_loss))
+            train_losses.append(mean_loss)
             val_loss = []
             with torch.no_grad():
                 for j, data in enumerate(val_dataloader, 0):
@@ -519,6 +521,18 @@ def main():
             print('model saved as: {}\n'.format(trained_model_name))
 
         epoch_losses = np.asarray(epoch_losses)
+        train_losses = np.asarray(train_losses)
+        epochs = np.asarray(range(args.epoch))
+
+        plt.title('Loss Visualization')
+        plt.plot(epochs, train_losses, color='blue', label='training loss')
+        plt.plot(epochs, epoch_losses, color='red', label='validation loss')
+        plt.legend()
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.savefig(args.images + 'loss.png')
+        plt.show()
+
         best_epoch = np.argmin(epoch_losses)
         best_model_name = 'Siamese_Epoch_{}.pth'.format(best_epoch)
         pth_files = glob.glob(args.net + '*.pth')
