@@ -346,7 +346,7 @@ def main():
     aa('--transpose', default=-1, type=int, help="one of the 7 PIL transpose options ")
     aa('--train', default=False, action="store_true", help="run Siamese training")
     aa('--start', default=False, action="store_true", help="run Siamese training without lodading checkpoint")
-    aa('--track1', default=False, action="store_true", help="run feature extraction for track1")
+    aa('--track2', default=False, action="store_true", help="run feature extraction for track2")
     aa('--device', default="cuda:0", help='pytroch device')
     aa('--batch_size', default=32, type=int, help="max batch size to use for extraction")
     aa('--num_workers', default=8, type=int, help="nb of dataloader workers")
@@ -375,6 +375,7 @@ def main():
     aa('--query_f', default="isc2021/data/query_siamese.hdf5", help="write query features to this file")
     aa('--db_f', default="isc2021/data/db_siamese.hdf5", help="write query features to this file")
     aa('--train_f', default="isc2021/data/train_siamese.hdf5", help="write training features to this file")
+    aa('--full_f', default="isc2021/data/full_siamese.hdf5", help="write full features to this file")
     aa('--net', default="isc2021/checkpoints/Siamese/", help="save network parameters to this folder")
     aa('--images', default="isc2021/data/images/siamese/", help="save visualized test result to this folder")
 
@@ -650,21 +651,24 @@ def main():
                 print(f"writing reference descriptors to {args.db_f}")
                 print(f"db_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
 
-                if args.track1:
-                    train_feats = list()
-                    train_loader = DataLoader(dataset=train_dataset, shuffle=False,
-                                              num_workers=args.num_workers, batch_size=args.batch_size)
-                    t0 = time.time()
-                    for no, data in enumerate(train_loader):
-                        images = data
-                        images = images.to(args.device)
-                        feats = net.forward_once(images)
-                        train_feats.append(feats.cpu().numpy())
-                    t1 = time.time()
-                    train_feats = np.vstack(train_feats)
-                    write_hdf5_descriptors(train_feats, train_images, args.train_f)
-                    print(f"writing reference descriptors to {args.train_f}")
-                    print(f"train_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
+                if args.track2:
+                    # train_feats = list()
+                    # train_loader = DataLoader(dataset=train_dataset, shuffle=False,
+                    #                           num_workers=args.num_workers, batch_size=args.batch_size)
+                    # t0 = time.time()
+                    # for no, data in enumerate(train_loader):
+                    #     images = data
+                    #     images = images.to(args.device)
+                    #     feats = net.forward_once(images)
+                    #     train_feats.append(feats.cpu().numpy())
+                    # t1 = time.time()
+                    # train_feats = np.vstack(train_feats)
+                    # write_hdf5_descriptors(train_feats, train_images, args.train_f)
+                    # print(f"writing reference descriptors to {args.train_f}")
+                    # print(f"train_image_description_time: {(t1 - t0) / len(db_images):.5f} s per image")
+                    feat_full = np.vstack(query_feats, db_feats)
+                    img_full = query_images + db_images
+                    write_hdf5_descriptors(db_feats, db_images, args.full_f)
 
 
 if __name__ == "__main__":
