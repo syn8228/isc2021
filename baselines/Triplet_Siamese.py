@@ -459,6 +459,9 @@ def main():
                                       batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork(args.model)
+        if not args.start:
+            state_dict = torch.load(args.net + args.checkpoint)
+            net.load_state_dict(state_dict)
         net.to(args.device)
         criterion = TripletLoss()
         criterion.to(args.device)

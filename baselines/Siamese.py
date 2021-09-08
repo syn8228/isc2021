@@ -345,6 +345,7 @@ def main():
     group = parser.add_argument_group('feature extraction options')
     aa('--transpose', default=-1, type=int, help="one of the 7 PIL transpose options ")
     aa('--train', default=False, action="store_true", help="run Siamese training")
+    aa('--start', default=False, action="store_true", help="run Siamese training without lodading checkpoint")
     aa('--track1', default=False, action="store_true", help="run feature extraction for track1")
     aa('--device', default="cuda:0", help='pytroch device')
     aa('--batch_size', default=32, type=int, help="max batch size to use for extraction")
@@ -459,6 +460,9 @@ def main():
                                       batch_size=args.batch_size)
         print("loading model")
         net = SiameseNetwork(args.model)
+        if not args.start:
+            state_dict = torch.load(args.net + args.checkpoint)
+            net.load_state_dict(state_dict)
         net.to(args.device)
         criterion = ContrastiveLoss()
         criterion.to(args.device)
