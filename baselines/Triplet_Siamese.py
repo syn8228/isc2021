@@ -284,12 +284,12 @@ class TrainList(Dataset):
 
     def __getitem__(self, i):
         background = Image.open(random.sample(self.full_list, 1)[0])
-        self.argumentation.append(MergeImage(background, probability=0.2))
+        self.argumentation.append(MergeImage(background, probability=0.3))
         random.shuffle(self.argumentation)
         argument = Compose(self.argumentation)
-        query_image = Image.open(self.image_list[i])
-        query_image = query_image.convert("RGB")
-        db_positive = argument(query_image)
+        db_positive = Image.open(self.image_list[i])
+        db_positive = db_positive.convert("RGB")
+        query_image = argument(db_positive)
         db_negative = Image.open(random.sample(self.full_list, 1)[0])
         db_negative = db_negative.convert("RGB")
         if self.transform is not None:
@@ -442,7 +442,7 @@ def main():
             EncodingQuality(probability=0.1),
             Colorjitter(probability=0.1),
             AspectRatio(probability=0.1),
-            OverlayOntoScreenshot(probability=0.1),
+            OverlayOntoScreenshot(probability=0.2),
         ]
 
         print("training network")
