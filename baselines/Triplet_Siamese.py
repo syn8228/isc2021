@@ -431,12 +431,12 @@ def main():
             HorizontalFlip(probability=0.25),
             AuglyRotate(probability=0.2),
             GaussianBlur(probability=0.1),
-            ColRec(probability=0.2),
+            ColRec(probability=0.3),
             GaussianNoise(probability=0.1),
             ZoomIn(probability=0.1),
             ZoomOut(probability=0.1),
             NegativeImage(probability=0.03),
-            ChangeColor(probability=0.2),
+            ChangeColor(probability=0.3),
             OverlayEmoji(probability=0.1),
             OverlayText(probability=0.2),
             EncodingQuality(probability=0.1),
@@ -540,6 +540,49 @@ def main():
         for file in pth_files:
             os.remove(file)
         print("best model is: {} with validation loss {}\n".format(best_model_name, epoch_losses[best_epoch]))
+
+        test_subset = train_images[500:550]
+        test_data = TrainList(test_subset, train_images, transform=transforms, imsize=args.imsize, argumentation=argu_list)
+        test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
+                                 batch_size=1)
+        net = SiameseNetwork(args.model)
+        state_dict = torch.load(args.net + best_model_name)
+        net.load_state_dict(state_dict)
+        net.to(args.device)
+
+
+        with torch.no_grad():
+            p_distance = []
+            n_distance = []
+            for i, data in enumerate(test_loader, 0):
+                img_name = 'test_{}.jpg'.format(i)
+                img_pth = args.images + img_name
+                q_img, rp_img, rn_img = data
+                if i < 25:
+                    r_img = rp_img
+                    label = 0
+                else:
+                    r_img = rn_img
+                    label = 1
+                concatenated = torch.cat((q_img, r_img), 0)
+                q_img_cp = copy.deepcopy(q_img)
+                r_img_cp = copy.deepcopy(r_img)
+                q_img = q_img_cp.to(args.device)
+                r_img = r_img_cp.to(args.device)
+                score = net.calculate_distance(q_img, r_img).cpu()
+                if label == 0:
+                    label = 'matched'
+                    p_distance.append(score.item())
+                    print('matched with distance: {:.4f}\n'.format(score.item()))
+                if label == 1:
+                    label = 'not matched'
+                    n_distance.append(score.item())
+                    print('not matched with distance: {:.4f}\n'.format(score.item()))
+                imshow(torchvision.utils.make_grid(concatenated),
+                       'Dissimilarity: {:.2f} Label: {}'.format(score.item(), label), should_save=True, pth=img_pth)
+            print('-------------------------------------------------------------')
+            print('matched mean distance: {:.4f}\n'.format(torch.mean(torch.Tensor(p_distance))))
+            print('not matched mean distance: {:.4f}\n'.format(torch.mean(torch.Tensor(n_distance))))
 
     else:
         print("computing features")
