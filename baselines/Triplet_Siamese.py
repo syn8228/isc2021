@@ -546,7 +546,8 @@ def main():
         print("best model is: {} with validation loss {}\n".format(best_model_name, epoch_losses[best_epoch]))
 
         test_subset = train_images[500:550]
-        test_data = TrainList(test_subset, train_images, transform=transforms, imsize=args.imsize, argumentation=argu_list)
+        test_data = TrainList(test_subset, train_images, transform=transforms, imsize=args.imsize,
+                              argumentation=argument)
         test_loader = DataLoader(dataset=test_data, shuffle=True, num_workers=args.num_workers,
                                  batch_size=1)
         net = SiameseNetwork(args.model)
