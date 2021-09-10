@@ -2,6 +2,14 @@
 
 Path to 3 images datasets and facebook resnet50 checkpoint are global variables in code siamese.py
 
+# Install requirements:
+pip3 install --user -r isc2021/requirements.txt
+pip3 install efficientnet_pytorch
+pip3 install pytorch_pretrained_vit
+pip3 install timm
+pip3 install augly
+pip3 install python-magic-bin==0.4.14
+
 #Training 
 Example:
 python3	isc2021/baselines/Siamese.py 
@@ -19,6 +27,10 @@ python3	isc2021/baselines/Siamese.py
 -- margin 15.0
 --i0 0 
 --i1 400
+# Start training
+--start
+# Continue training
+--checkpoint Siamese_Epoch_20.pth
 
 Options:
 --transpose: insert one of the 7 PIL transpose, default:-1
@@ -26,6 +38,8 @@ Options:
 --device: pytorch device, default: cuda:0
 --batch_size: Dataloader batch size
 --num_workers: number of Dataloader workers
+--start: start training without loading checkpoint
+--checkpoint: continue training with saved checkpoint
 
 Model Options:
 --model: select pretrained model
