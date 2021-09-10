@@ -7,6 +7,8 @@ import augly.image.transforms as imaugs
 import augly.utils as utils
 
 from PIL import Image, ImageOps, ImageFilter
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class VerticalFlip(object):
