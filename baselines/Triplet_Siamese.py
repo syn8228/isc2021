@@ -283,13 +283,13 @@ class TrainList(Dataset):
         return len(self.image_list)
 
     def __getitem__(self, i):
-        background = Image.open(random.sample(self.full_list, 1)[0])
-        self.argumentation.append(MergeImage(background, probability=0.3))
-        random.shuffle(self.argumentation)
-        argument = Compose(self.argumentation)
+        # background = Image.open(random.sample(self.full_list, 1)[0])
+        # self.argumentation.append(MergeImage(background, probability=0.3))
+        # random.shuffle(self.argumentation)
+        # argument = Compose(self.argumentation)
         db_positive = Image.open(self.image_list[i])
         db_positive = db_positive.convert("RGB")
-        query_image = argument(db_positive)
+        query_image = self.argumentation(db_positive)
         db_negative = Image.open(random.sample(self.full_list, 1)[0])
         db_negative = db_negative.convert("RGB")
         if self.transform is not None:
@@ -425,7 +425,7 @@ def main():
     transforms = torchvision.transforms.Compose(transforms)
 
     if args.train:
-
+        background = Image.open(random.sample(train_images, 1)[0])
         argu_list = [
             VerticalFlip(probability=0.25),
             HorizontalFlip(probability=0.25),
@@ -443,7 +443,10 @@ def main():
             Colorjitter(probability=0.2),
             AspectRatio(probability=0.1),
             OverlayOntoScreenshot(probability=0.2),
+            MergeImage(background, probability=0.3)
         ]
+        random.shuffle(argu_list)
+        argument = Compose(argu_list)
 
         print("training network")
         # t_list = generate_train_dataset(query_list, gt_list, train_list, args.len)
@@ -454,7 +457,7 @@ def main():
         #                               batch_size=args.batch_size)
         val_list = train_images[0:args.len]
 
-        val_pairs = TrainList(val_list, train_images, transform=transforms, imsize=args.imsize, argumentation=argu_list)
+        val_pairs = TrainList(val_list, train_images, transform=transforms, imsize=args.imsize, argumentation=argument)
 
         val_dataloader = DataLoader(dataset=val_pairs, shuffle=True, num_workers=args.num_workers,
                                       batch_size=args.batch_size)
@@ -471,11 +474,12 @@ def main():
         loss_history = list()
         epoch_losses = list()
         train_losses = list()
-        epoch_size = int(len(train_list) / args.epoch)
+        #epoch_size = int(len(train_list) / args.epoch)
         for epoch in range(args.epoch):
-            train_subset = train_list[epoch * epoch_size: (epoch + 1) * epoch_size - 1]
+            #train_subset = train_list[epoch * epoch_size: (epoch + 1) * epoch_size - 1]
 
-            im_pairs = TrainList(train_subset, train_images, transform=transforms, imsize=args.imsize, argumentation=argu_list)
+            im_pairs = TrainList(train_list, train_images, transform=transforms, imsize=args.imsize,
+                                 argumentation=argument)
             train_dataloader = DataLoader(dataset=im_pairs, shuffle=True, num_workers=args.num_workers,
                                           batch_size=args.batch_size)
             for i, data in enumerate(train_dataloader, 0):
