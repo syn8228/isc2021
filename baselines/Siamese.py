@@ -437,7 +437,7 @@ def main():
         argu_list = [
             VerticalFlip(probability=0.25),
             HorizontalFlip(probability=0.25),
-            # AuglyRotate(0.2),
+            AuglyRotate(1.0),
             GaussianBlur(probability=0.1),
             ColRec(probability=0.2),
             GaussianNoise(probability=0.1),
