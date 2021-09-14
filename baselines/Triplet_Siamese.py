@@ -180,8 +180,8 @@ class SiameseNetwork(nn.Module):
     def __init__(self, model):
         super(SiameseNetwork, self).__init__()
         self.head = load_model(model, CHECK)
-        for p in self.parameters():
-            p.requires_grad = False
+        # for p in self.parameters():
+        #     p.requires_grad = False
         if model == "zoo_resnet50" or model == "multigrain_resnet50":
             self.map = True
         else:
@@ -469,7 +469,12 @@ def main():
         net.to(args.device)
         criterion = TripletLoss()
         criterion.to(args.device)
-        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()),
+        # optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()),
+        #                              lr=args.lr, weight_decay=args.weight_decay)
+        head_parameter = list(map(id, net.head.parameters()))
+        rest_parameter = filter(lambda p: id(p) not in head_parameter, net.parameters)
+        optimizer = torch.optim.Adam([{'params': net.head.parameters(), 'lr': args.lr*0.1},
+                                      {'params': rest_parameter, 'lr': args.lr}],
                                      lr=args.lr, weight_decay=args.weight_decay)
         loss_history = list()
         epoch_losses = list()
