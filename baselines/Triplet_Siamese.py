@@ -471,10 +471,9 @@ def main():
         criterion.to(args.device)
         # optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()),
         #                              lr=args.lr, weight_decay=args.weight_decay)
-        head_parameter = list(map(id, net.head.parameters()))
-        rest_parameter = filter(lambda p: id(p) not in head_parameter, net.parameters)
         optimizer = torch.optim.Adam([{'params': net.head.parameters(), 'lr': args.lr*0.1},
-                                      {'params': rest_parameter, 'lr': args.lr}],
+                                      {'params': net.fc1.parameters(), 'lr': args.lr},
+                                      {'params': net.fc2.parameters(), 'lr': args.lr}],
                                      lr=args.lr, weight_decay=args.weight_decay)
         loss_history = list()
         epoch_losses = list()
