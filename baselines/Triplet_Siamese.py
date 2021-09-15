@@ -445,7 +445,7 @@ def main():
             OverlayOntoScreenshot(probability=0.2),
             MergeImage(background, probability=0.3)
         ]
-        random.shuffle(argu_list)
+        #random.shuffle(argu_list)
         argument = Compose(argu_list)
 
         print("training network")
