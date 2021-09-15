@@ -1,3 +1,4 @@
+import sys
 import math
 import numbers
 import random
@@ -5,6 +6,8 @@ import numpy as np
 from torchvision import transforms
 import augly.image.transforms as imaugs
 import augly.utils as utils
+
+sys.path.append('/cluster/yinan/isc2021')
 
 from PIL import Image, ImageOps, ImageFilter
 from PIL import ImageFile
