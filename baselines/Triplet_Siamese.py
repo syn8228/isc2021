@@ -426,10 +426,28 @@ def main():
 
     if args.train:
         background = Image.open(random.sample(train_images, 1)[0])
+        # argu_list = [
+        #     VerticalFlip(probability=0.25),
+        #     HorizontalFlip(probability=0.25),
+        #     GaussianBlur(probability=0.1),
+        #     ColRec(probability=0.3),
+        #     GaussianNoise(probability=0.1),
+        #     ZoomIn(probability=0.1),
+        #     ZoomOut(probability=0.1),
+        #     NegativeImage(probability=0.05),
+        #     ChangeColor(probability=0.3),
+        #     AuglyRotate(probability=0.2),
+        #     OverlayEmoji(probability=0.1),
+        #     OverlayText(probability=0.2),
+        #     EncodingQuality(probability=0.1),
+        #     Colorjitter(probability=0.2),
+        #     AspectRatio(probability=0.1),
+        #     OverlayOntoScreenshot(probability=0.2),
+        #     MergeImage(background, probability=0.3)
+        # ]
         argu_list = [
             VerticalFlip(probability=0.25),
             HorizontalFlip(probability=0.25),
-            AuglyRotate(probability=0.2),
             GaussianBlur(probability=0.1),
             ColRec(probability=0.3),
             GaussianNoise(probability=0.1),
@@ -437,13 +455,14 @@ def main():
             ZoomOut(probability=0.1),
             NegativeImage(probability=0.05),
             ChangeColor(probability=0.3),
-            OverlayEmoji(probability=0.1),
-            OverlayText(probability=0.2),
-            EncodingQuality(probability=0.1),
-            Colorjitter(probability=0.2),
-            AspectRatio(probability=0.1),
-            OverlayOntoScreenshot(probability=0.2),
-            MergeImage(background, probability=0.3)
+            AuglyRotate(probability=1.0),
+            OverlayEmoji(probability=1.0),
+            OverlayText(probability=1.0),
+            EncodingQuality(probability=1.0),
+            Colorjitter(probability=1.0),
+            AspectRatio(probability=1.0),
+            OverlayOntoScreenshot(probability=1.0),
+            MergeImage(background, probability=1.0)
         ]
         #random.shuffle(argu_list)
         argument = Compose(argu_list)
