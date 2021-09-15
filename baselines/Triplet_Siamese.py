@@ -471,7 +471,7 @@ def main():
         criterion.to(args.device)
         # optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()),
         #                              lr=args.lr, weight_decay=args.weight_decay)
-        optimizer = torch.optim.Adam([{'params': net.head.parameters(), 'lr': args.lr*0.1},
+        optimizer = torch.optim.Adam([{'params': net.head.parameters(), 'lr': args.lr*0.05},
                                       {'params': net.fc1.parameters(), 'lr': args.lr},
                                       {'params': net.fc2.parameters(), 'lr': args.lr}],
                                      lr=args.lr, weight_decay=args.weight_decay)
