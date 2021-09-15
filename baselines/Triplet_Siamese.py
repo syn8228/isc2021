@@ -501,7 +501,7 @@ def main():
                 optimizer.step()
                 loss_history.append(loss)
 
-                if (i+1)*args.batch_size % 10 == 0:
+                if (i+1)*args.batch_size % 100 == 0:
                     mean_loss = torch.mean(torch.Tensor(loss_history))
                     loss_history.clear()
 
