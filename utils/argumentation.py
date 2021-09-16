@@ -230,7 +230,7 @@ class AspectRatio(object):
         self.p = probability
 
     def __call__(self, image):
-        factor = random.uniform(0, 2)
+        factor = random.uniform(0.1, 2)
         meta = []
         aug = imaugs.ChangeAspectRatio(ratio=factor, p=self.p)
         image = aug(image, metadata=meta)
