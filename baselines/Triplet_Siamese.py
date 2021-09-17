@@ -461,7 +461,7 @@ def main():
             OverlayText(probability=1.0),
             EncodingQuality(probability=1.0),
             Colorjitter(probability=1.0),
-            # AspectRatio(probability=1.0),
+            AspectRatio(probability=1.0),
             # OverlayOntoScreenshot(probability=1.0),
         ]
         #random.shuffle(argu_list)
